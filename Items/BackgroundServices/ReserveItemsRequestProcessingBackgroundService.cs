@@ -95,8 +95,8 @@ public sealed class ReserveItemsRequestProcessingBackgroundService : BackgroundS
 
     public override void Dispose()
     {
-        _channel.Close();
-        _connection.Close();
+        _channel?.Close();
+        _connection?.Close();
         base.Dispose();
     }
 }
