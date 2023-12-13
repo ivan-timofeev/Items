@@ -97,6 +97,7 @@ public sealed class ReserveItemsRequestProcessingBackgroundService : BackgroundS
     {
         _channel?.Close();
         _connection?.Close();
-        base.Dispose();
+        
+        base.Dispose(); 
     }
 }
