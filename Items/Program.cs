@@ -38,7 +38,7 @@ public static class Program
                     .Enrich.WithProperty("Environment", ctx.HostingEnvironment.EnvironmentName)
                     .WriteTo.Console(new RenderedCompactJsonFormatter());
 
-                var lokiApiUrl = ctx.Configuration["loki"];
+                var lokiApiUrl = ctx.Configuration["LokiApi"];
                 if (lokiApiUrl is null)
                     return;
 
