@@ -1,49 +1,52 @@
-using Microsoft.EntityFrameworkCore;
-using Items.BackgroundServices;
-using Items.Data;
-using Items.Services;
-using Prometheus;
+using Serilog;
+using Serilog.Formatting.Compact;
+using Serilog.Sinks.Loki;
 
-var builder = WebApplication.CreateBuilder(args);
+namespace Items;
 
-// Add services to the container.
-
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var connectionString = builder.Configuration["ItemsSqlConnectionString"];
-builder.Services.AddDbContextFactory<ItemsDbContext>(
-    options => options.UseSqlServer(connectionString));
-
-builder.Services.AddTransient<IItemsRepository, ItemsRepository>();
-builder.Services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
-builder.Services.AddSingleton<IOrdersMicroserviceApiClient, OrdersMicroserviceApiClient>();
-builder.Services.AddTransient<IReserveItemsRequestProcessor, ReserveItemsRequestProcessor>();
-builder.Services.AddHostedService<ReserveItemsRequestProcessingBackgroundService>();
-
-var app = builder.Build();
-
-// Custom Metrics to count requests for each endpoint and the method
-var counter = Metrics.CreateCounter(
-    name: "orders_api_path_counter",
-    help: "Counts requests to the People API endpoints",
-    new CounterConfiguration
-    {
-        LabelNames = new[] { "method", "endpoint" }
-    });
-app.Use((context, next) =>
+public static class Program
 {
-    counter.WithLabels(context.Request.Method, context.Request.Path).Inc();
-    return next();
-});
+    public static void Main(string[] args)
+    {
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+            .Enrich.FromLogContext()
+            .WriteTo.Console()
+            .CreateLogger();
 
-// Use the Prometheus middleware
-app.UseMetricServer();
-app.UseHttpMetrics();
+        try
+        {
+            Log.Information("Staring the Host");
+            CreateHostBuilder(args).Build().Run();
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Host Terminated Unexpectedly");
+        }
+        finally
+        {
+            Log.CloseAndFlush();
+        }
+    }
 
-app.UseSwagger();
-app.UseSwaggerUI();
-app.MapControllers();
+    private static IHostBuilder CreateHostBuilder(string[] args) =>
+        Host.CreateDefaultBuilder(args)
+            .UseSerilog((ctx,cfg)=>
+            {
+                cfg
+                    .Enrich.WithProperty("Application", ctx.HostingEnvironment.ApplicationName)
+                    .Enrich.WithProperty("Environment", ctx.HostingEnvironment.EnvironmentName)
+                    .WriteTo.Console(new RenderedCompactJsonFormatter());
 
-app.Run();
+                var lokiApiUrl = ctx.Configuration["LokiApi"];
+                if (lokiApiUrl is null)
+                    return;
+
+                cfg.WriteTo.LokiHttp(lokiApiUrl);
+                Log.Information("Connected to Loki");
+            })
+            .ConfigureWebHostDefaults(webBuilder =>
+            {
+                webBuilder.UseStartup<Startup>();
+            });
+}
