@@ -7,6 +7,7 @@ on:
 
 jobs:
   test:
+    name: "Build & Test .NET Project"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -21,7 +22,9 @@ jobs:
     - name: Test with the dotnet CLI
       run: dotnet test
 
-  build-and-push:
+  publish:
+    name: "Publish container to Docker Hub"
+    needs: test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
