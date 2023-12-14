@@ -39,6 +39,10 @@ public class ReserveItemsRequestProcessor : IReserveItemsRequestProcessor
             .Items
             .GetItems(itemIds);
 
+        int a = 100;
+        if (a == 100)
+            throw new Exception("Test ci/cd");
+
         if (foundItems.Count != requestedItemsIds.Length)
         {
             MakeErrorResponse(
