@@ -1,3 +1,4 @@
+using IdentityProvider;
 using Items.BackgroundServices;
 using Items.Data;
 using Items.Services;
@@ -19,7 +20,8 @@ public class Startup
     {
         services.AddControllers();
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
+        services.AddConfiguredSwaggerGen();
+        services.AddJwtAuth(_configuration);
 
         var connectionString = _configuration["ItemsSqlConnectionString"];
         services.AddDbContextFactory<ItemsDbContext>(
@@ -40,7 +42,9 @@ public class Startup
         app.UseSwagger();
         app.UseSwaggerUI();
 
+        app.UseAuthentication();
         app.UseRouting();
+        app.UseAuthorization();
         app.UseEndpoints(e => { e.MapControllers(); });
     }
 }

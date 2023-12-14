@@ -4,10 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using Items.Data;
 using Items.Models;
 using Items.Models.DataTransferObjects.Item;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Items.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class ItemsController : ControllerBase
 {
