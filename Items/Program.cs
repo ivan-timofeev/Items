@@ -15,6 +15,8 @@ var connectionString = builder.Configuration["ItemsSqlConnectionString"];
 builder.Services.AddDbContextFactory<ItemsDbContext>(
     options => options.UseSqlServer(connectionString));
 
+builder.Services.AddTransient<IItemsRepository, ItemsRepository>();
+builder.Services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
 builder.Services.AddSingleton<IOrdersMicroserviceApiClient, OrdersMicroserviceApiClient>();
 builder.Services.AddTransient<IReserveItemsRequestProcessor, ReserveItemsRequestProcessor>();
 builder.Services.AddHostedService<ReserveItemsRequestProcessingBackgroundService>();

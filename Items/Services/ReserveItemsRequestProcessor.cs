@@ -1,7 +1,4 @@
-using System.Data;
-using Items.Data;
 using Items.Models.DataTransferObjects.CreateOrder;
-using Microsoft.EntityFrameworkCore;
 
 namespace Items.Services;
 
@@ -12,75 +9,69 @@ public interface IReserveItemsRequestProcessor
 
 public class ReserveItemsRequestProcessor : IReserveItemsRequestProcessor
 {
-    private readonly IDbContextFactory<ItemsDbContext> _dbContextFactory;
+    private readonly IUnitOfWorkFactory _unitOfWorkFactory;
     private readonly IOrdersMicroserviceApiClient _ordersMicroserviceApiClient;
 
     public ReserveItemsRequestProcessor(
-        IDbContextFactory<ItemsDbContext> dbContextFactory,
+        IUnitOfWorkFactory unitOfWorkFactory,
         IOrdersMicroserviceApiClient ordersMicroserviceApiClient)
     {
-        _dbContextFactory = dbContextFactory;
+        _unitOfWorkFactory = unitOfWorkFactory;
         _ordersMicroserviceApiClient = ordersMicroserviceApiClient;
     }
     
     public void ProcessReserveItemsRequest(ReserveItemsRequest reserveItemsRequest)
     {
-        using var dbContext = _dbContextFactory.CreateDbContext();
-        using var transaction = dbContext.Database.BeginTransaction(IsolationLevel.Serializable);
-        var isTransactionCommitted = false;
+        using var unitOfWork = _unitOfWorkFactory.CreateUnitOfWork();
+        using var transaction = unitOfWork.BeginTransaction();
 
-        try
+        var requestedItemsIds = reserveItemsRequest
+            .RequestedItems
+            .Select(i => i.ItemId)
+            .ToArray();
+
+        var itemIds = reserveItemsRequest
+            .RequestedItems
+            .Select(r => r.ItemId)
+            .ToArray();
+
+        var foundItems = unitOfWork
+            .Items
+            .GetItems(itemIds);
+
+        if (foundItems.Count != requestedItemsIds.Length)
         {
-            var requestedItemsIds = reserveItemsRequest
-                .RequestedItems
-                .Select(i => i.ItemId)
-                .ToArray();
+            MakeErrorResponse(
+                reserveItemsRequest.OrderId,
+                "One or more of requested items not found.");
 
-            var foundItems = dbContext
-                .Items
-                .Where(i => requestedItemsIds.Contains(i.Id))
-                .ToArray();
+            return;
+        }
 
-            if (foundItems.Length != requestedItemsIds.Length)
+        foreach (var requestedItem in reserveItemsRequest.RequestedItems)
+        {
+            var foundItem = foundItems
+                .Where(i => i.Id == requestedItem.ItemId)
+                .Single();
+
+            if (foundItem.AvailableQuantity < requestedItem.RequestedQuantity)
             {
                 MakeErrorResponse(
                     reserveItemsRequest.OrderId,
-                    "One or more of requested items not found.");
+                    "One or more requested items are not enough in stock");
+
                 return;
             }
 
-            foreach (var requestedItem in reserveItemsRequest.RequestedItems)
-            {
-                var foundItem = foundItems
-                    .Where(i => i.Id == requestedItem.ItemId)
-                    .Single();
-
-                if (foundItem.AvailableQuantity < requestedItem.RequestedQuantity)
-                {
-                    MakeErrorResponse(
-                        reserveItemsRequest.OrderId,
-                        "One or more requested items are not enough in stock");
-                    return;
-                }
-
-                foundItem.AvailableQuantity -= requestedItem.RequestedQuantity;
-            }
-
-            dbContext.SaveChanges();
-            transaction.Commit();
-
-            isTransactionCommitted = true;
+            unitOfWork.Items.UpdateItemQuantity(
+                foundItem,
+                foundItem.AvailableQuantity - requestedItem.RequestedQuantity);
         }
-        finally
-        {
-            if (!isTransactionCommitted)
-                transaction.Rollback();
-        }
+        
+        unitOfWork.SaveChanges();
+        transaction.Commit();
 
-        if (isTransactionCommitted)
-        {
-            MakeSuccessResponse(reserveItemsRequest.OrderId);
-        }
+        MakeSuccessResponse(reserveItemsRequest.OrderId);
     }
 
     private void MakeErrorResponse(Guid orderId, string message)
