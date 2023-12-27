@@ -4,12 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Items.Data;
 using Items.Models;
 using Items.Models.DataTransferObjects.Item;
-using Microsoft.AspNetCore.Authorization;
+using Items.Models.DataTransferObjects;
 
 namespace Items.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
 public class ItemsController : ControllerBase
 {
@@ -25,7 +24,9 @@ public class ItemsController : ControllerBase
     }
 
     // GET: api/items/
-    [HttpGet]
+    [HttpGet(Name = "GetAllItems")]
+    [ProducesResponseType(typeof(IEnumerable<ItemDto>), StatusCodes.Status200OK)]
+    [ProducesErrorResponseType(typeof(ErrorDto))]
     public IActionResult GetAll()
     {
         using var dbContext = _dbContextFactory.CreateDbContext();
@@ -35,7 +36,9 @@ public class ItemsController : ControllerBase
     }
 
     // POST: api/items/
-    [HttpPost]
+    [HttpPost(Name = "CreateItem")]
+    [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
+    [ProducesErrorResponseType(typeof(ErrorDto))]
     public IActionResult CreateNew([FromBody, BindRequired] CreateItemDto createItemDto)
     {
         using var dbContext = _dbContextFactory.CreateDbContext();

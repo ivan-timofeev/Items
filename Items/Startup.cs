@@ -1,9 +1,14 @@
 using IdentityProvider;
 using Items.BackgroundServices;
 using Items.Data;
+using Items.Models.DataTransferObjects;
 using Items.Services;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Prometheus;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Items;
 
@@ -23,9 +28,10 @@ public class Startup
         services.AddConfiguredSwaggerGen();
         services.AddJwtAuth(_configuration);
 
-        var connectionString = _configuration["ItemsSqlConnectionString"];
+        var connectionString = _configuration["ItemsSqlConnectionString"]
+            ?? throw new InvalidOperationException("ItemsSqlConnectionString must be specified.");
         services.AddDbContextFactory<ItemsDbContext>(
-            options => options.UseSqlServer(connectionString));
+            options => options.UseNpgsql(connectionString));
 
         services.AddTransient<IItemsRepository, ItemsRepository>();
         services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
@@ -36,10 +42,33 @@ public class Startup
  
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
+        app.UseExceptionHandler(exceptionHandlerApp =>
+        {
+            exceptionHandlerApp.Run(async context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                context.Response.ContentType = Text.Plain;
+
+                var error = context
+                    .Features
+                    .GetRequiredFeature<IExceptionHandlerPathFeature>()
+                    .Error;
+
+                await context.Response.WriteAsJsonAsync(
+                    new ErrorDto
+                    {
+                        ErrorMessage = error.Message,
+                        Details = error.ToString()
+                    });
+            });
+        });
+
         app.UseMetricServer();
         app.UseHttpMetrics();
 
+        // Available at: http://localhost:<port>/swagger/v1/swagger.json
         app.UseSwagger();
+        // Available at: http://localhost:<port>/swagger
         app.UseSwaggerUI();
 
         app.UseAuthentication();
