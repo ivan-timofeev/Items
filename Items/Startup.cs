@@ -35,13 +35,20 @@ public class Startup
 
         services.AddTransient<IItemsRepository, ItemsRepository>();
         services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
-        services.AddSingleton<IOrdersMicroserviceApiClient, OrdersMicroserviceApiClient>();
-        services.AddTransient<IReserveItemsRequestProcessor, ReserveItemsRequestProcessor>();
-        services.AddHostedService<ReserveItemsRequestProcessingBackgroundService>();
+        services.AddTransient<IDatabaseInitializer, DatabaseInitializer>();
+        services.AddResponseCaching();
     }
  
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
+        app.UseCors(builder =>
+            builder
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader());
+
+        app.UseResponseCaching();
+
         app.UseExceptionHandler(exceptionHandlerApp =>
         {
             exceptionHandlerApp.Run(async context =>
@@ -62,6 +69,12 @@ public class Startup
                     });
             });
         });
+
+        using (var scope = app.ApplicationServices.CreateScope())
+        {
+            var databaseInitializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
+            databaseInitializer.InitializeDatabase();
+        }
 
         app.UseMetricServer();
         app.UseHttpMetrics();

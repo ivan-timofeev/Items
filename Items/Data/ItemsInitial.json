@@ -1,0 +1,191 @@
+[
+  {
+    "DisplayName": "Танец цвета",
+    "Quantity": 3,
+    "Price": 4500.00,
+    "Categories": [ "Абстракция", "Современное искусство", "Цвет" ],
+    "OverallRating": 0.95,
+    "Description": "Эта картина представляет собой игру цветов и форм, которая соблазняет воображение и вызывает чувство радости и экстаза.",
+    "ImageUrl": "/images/1.webp"
+  },
+  {
+    "DisplayName": "Эхо мечты",
+    "Quantity": 5,
+    "Price": 5200.00,
+    "Categories": [ "Абстракция", "Минимализм" ],
+    "OverallRating": 0.89,
+    "Description": "Спокойные оттенки и смелые штрихи сочетаются, создавая мистическое пространство для раздумий и мечтаний.",
+    "ImageUrl": "/images/2.webp"
+  },
+  {
+    "DisplayName": "Вихрь страстей",
+    "Quantity": 2,
+    "Price": 6700.00,
+    "Categories": [ "Абстракция", "Экспрессия" ],
+    "OverallRating": 0.93,
+    "Description": "Завораживающее сочетание красного и черного отображает шторм эмоций и неуправляемые страсти человеческой души.",
+    "ImageUrl": "/images/3.webp"
+  },
+  {
+    "DisplayName": "Отголоски времени",
+    "Quantity": 4,
+    "Price": 4900.00,
+    "Categories": [ "Абстракция", "Концептуальное искусство" ],
+    "OverallRating": 0.86,
+    "Description": "Произведение искусства, построенное на контрасте старины и новизны, с изящными узорами времени, воплощенными в красках.",
+    "ImageUrl": "/images/4.webp"
+  },
+  {
+    "DisplayName": "Гармония произвольности",
+    "Quantity": 6,
+    "Price": 5600.00,
+    "Categories": [ "Абстракция", "Импрессионизм" ],
+    "OverallRating": 0.91,
+    "Description": "Игривые формы и случайные взаимодействия цветов в этой картине создают образ, который говорит о порядке в хаосе естественной красоты.",
+    "ImageUrl": "/images/5.webp"
+  },
+  {
+    "DisplayName": "Загадка века",
+    "Quantity": 5,
+    "Price": 2000.0,
+    "Categories": [ "Абстракция", "Сюрреализм" ],
+    "OverallRating": 0.9,
+    "Description": "Загадочная и многогранная картина, стимулирующая воображение.",
+    "ImageUrl": "/images/6.webp"
+  },
+  {
+    "DisplayName": "Эхо времени",
+    "Quantity": 4,
+    "Price": 1999.99,
+    "Categories": [ "Абстракция", "Футуризм" ],
+    "OverallRating": 0.7,
+    "Description": "Абстрактное путешествие в глубину времени.",
+    "ImageUrl": "/images/7.webp"
+  },
+  {
+    "DisplayName": "Чувство мира",
+    "Quantity": 5,
+    "Price": 1800.0,
+    "Categories": [ "Абстракция", "Импрессионизм" ],
+    "OverallRating": 0.89,
+    "Description": "Легкие, воздушные мазки раскрывают красоту мироздания.",
+    "ImageUrl": "/images/8.webp"
+  },
+  {
+    "DisplayName": "Вихрь эмоций",
+    "Quantity": 3,
+    "Price": 2100.0,
+    "Categories": [ "Абстракция", "Дадаизм" ],
+    "OverallRating": 0.65,
+    "Description": "Сильные эмоции, застывшие на холсте.",
+    "ImageUrl": "/images/9.webp"
+  },
+  {
+    "DisplayName": "Игра контрастов",
+    "Quantity": 7,
+    "Price": 2300.3,
+    "Categories": [ "Абстракция", "Постмодернизм" ],
+    "OverallRating": 0.76,
+    "Description": "Противопоставление цвета и формы для создания нового восприятия.",
+    "ImageUrl": "/images/10.webp"
+  },
+  {
+    "DisplayName": "Бесконечное разнообразие",
+    "Quantity": 6,
+    "Price": 2450.0,
+    "Categories": [ "Абстракция", "Кубизм" ],
+    "OverallRating": 0.83,
+    "Description": "Множество перспектив объединены в единую композицию.",
+    "ImageUrl": "/images/11.webp"
+  },
+  {
+    "DisplayName": "Рассвет Лоу-Поли",
+    "Quantity": 12,
+    "Price": 1499.99,
+    "Categories": [ "Лоу-поли", "Абстракция", "Рассвет" ],
+    "OverallRating": 0.95,
+    "Description": "Абстрактная лоу-поли композиция, изображающая рассвет.",
+    "ImageUrl": "/images/12.webp"
+  },
+  {
+    "DisplayName": "Синее безмолвие",
+    "Quantity": 5,
+    "Price": 2500.00,
+    "Categories": [ "Лоу-поли", "Минимализм", "Синий" ],
+    "OverallRating": 0.89,
+    "Description": "Глубокий синий цвет в лоу-поли стиле, передающий тишину.",
+    "ImageUrl": "/images/13.webp"
+  },
+  {
+    "DisplayName": "Зелёные грезы",
+    "Quantity": 8,
+    "Price": 1999.99,
+    "Categories": [ "Лоу-поли", "Природа", "Зелёный" ],
+    "OverallRating": 0.93,
+    "Description": "Изображение зелёной фантазийной природы в стиле лоу-поли.",
+    "ImageUrl": "/images/14.webp"
+  },
+  {
+    "DisplayName": "Красная стихия",
+    "Quantity": 10,
+    "Price": 2999.50,
+    "Categories": [ "Лоу-поли", "Энергия", "Красный" ],
+    "OverallRating": 0.87,
+    "Description": "Энергичная Абстракция красного цвета, олицетворяющая страсть.",
+    "ImageUrl": "/images/15.webp"
+  },
+  {
+    "DisplayName": "Загадочные глубины",
+    "Quantity": 3,
+    "Price": 3500.00,
+    "Categories": [ "Лоу-поли", "Абстракция", "Фиолетовый" ],
+    "OverallRating": 0.82,
+    "Description": "Картина абстрактных фиолетовых глубин.",
+    "ImageUrl": "/images/16.webp"
+  },
+  {
+    "DisplayName": "Огненный вальс",
+    "Quantity": 7,
+    "Price": 1750.75,
+    "Categories": [ "Лоу-поли", "Танец", "Огонь" ],
+    "OverallRating": 0.90,
+    "Description": "Энергичное лоу-поли изображение, наполненное теплом и движением.",
+    "ImageUrl": "/images/17.webp"
+  },
+  {
+    "DisplayName": "Сумеречный мираж",
+    "Quantity": 4,
+    "Price": 2200.00,
+    "Categories": [ "Лоу-поли", "Закат", "Сумерки" ],
+    "OverallRating": 0.77,
+    "Description": "Лоу-поли картина, вдохновлённая сумеречными оттенками.",
+    "ImageUrl": "/images/18.webp"
+  },
+  {
+    "DisplayName": "Глитч-мозаика",
+    "Quantity": 6,
+    "Price": 2100.30,
+    "Categories": [ "Лоу-поли", "Глитч", "Цветнопиксельная" ],
+    "OverallRating": 0.92,
+    "Description": "Картина, сочетающая в себе лоу-поли структуру и глитч эффекты.",
+    "ImageUrl": "/images/19.webp"
+  },
+  {
+    "DisplayName": "Цифровое искусство",
+    "Quantity": 9,
+    "Price": 2675.65,
+    "Categories": [ "Лоу-поли", "Цифра", "Абстрактное" ],
+    "OverallRating": 0.96,
+    "Description": "Композиция, показывающая синтез лоу-поли и цифрового искусства.",
+    "ImageUrl": "/images/20.webp"
+  },
+  {
+    "DisplayName": "Пастельные ветры",
+    "Quantity": 11,
+    "Price": 1600.00,
+    "Categories": [ "Лоу-поли", "Пастель", "Нежность" ],
+    "OverallRating": 0.84,
+    "Description": "Легкая и воздушная лоу-поли композиция в пастельных тонах.",
+    "ImageUrl": "/images/21.webp"
+  }
+]
