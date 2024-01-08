@@ -36,6 +36,7 @@ public class Startup
         services.AddTransient<IItemsRepository, ItemsRepository>();
         services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
         services.AddTransient<IDatabaseInitializer, DatabaseInitializer>();
+        services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddResponseCaching();
     }
  
