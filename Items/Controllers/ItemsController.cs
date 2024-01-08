@@ -28,14 +28,14 @@ public class ItemsController : ControllerBase
     [HttpGet(Name = "GetItemsWithPagination")]
     [ProducesResponseType(typeof(IEnumerable<ItemDto>), StatusCodes.Status200OK)]
     [ProducesErrorResponseType(typeof(ErrorDto))]
-    [ResponseCache(VaryByQueryKeys = new[] { "page", "pageSize" }, Duration = 300)]
+    [ResponseCache(VaryByQueryKeys = new[] { "page", "pageSize", "filter", "sort" }, Duration = 300)]
     public IActionResult GetItemsByPage(
         [FromQuery] int page,
         [FromQuery] int pageSize,
         [FromQuery] string? filter = default,
         [FromQuery] string? sort = default)
     {
-        // TODO вынести это все в сервисы, нужно избавиться от этого лютого дерьма
+        // TODO move to services, govnocode
 
         var parsedFilter = filter != null
             ? JsonSerializer.Deserialize<FilterDto>(filter)

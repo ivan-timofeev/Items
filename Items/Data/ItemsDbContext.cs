@@ -7,6 +7,7 @@ public sealed class ItemsDbContext : DbContext
 {
     public DbSet<Item> Items { get; set; }
     public DbSet<ItemCategory> ItemsCategory { get; set; }
+    public DbSet<User> Users { get; set; }
 
     public ItemsDbContext(DbContextOptions options) : base(options)
     {
@@ -14,5 +15,6 @@ public sealed class ItemsDbContext : DbContext
         Database.EnsureCreated();
         Items = Set<Item>();
         ItemsCategory = Set<ItemCategory>();
+        Users = Set<User>();
     }
 }
