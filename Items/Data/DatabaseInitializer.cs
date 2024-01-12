@@ -1,11 +1,8 @@
 ﻿using Items.Models;
 using Items.Models.DataTransferObjects.Item;
-using Items.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using System.Text;
 using System.Text.Json;
-using System.Text.Unicode;
 
 namespace Items.Data
 {
@@ -16,25 +13,19 @@ namespace Items.Data
 
     internal sealed class DatabaseInitializer : IDatabaseInitializer
     {
-        private readonly IUnitOfWorkFactory _unitOfWorkFactory;
         private readonly IDbContextFactory<ItemsDbContext> _dbContextFactory;
 
         public DatabaseInitializer(
-            IUnitOfWorkFactory unitOfWorkFactory,
             IDbContextFactory<ItemsDbContext> dbContextFactory)
         {
-            _unitOfWorkFactory = unitOfWorkFactory;
             _dbContextFactory = dbContextFactory;
         }
 
         public void InitializeDatabase()
         {
-            using var unitOfWork = _unitOfWorkFactory.CreateUnitOfWork();
-            using var transaction = unitOfWork.BeginTransaction();
+            var dbContext = _dbContextFactory.CreateDbContext();
 
-            ReduceCategories();
-
-            if (!ShouldInitialize(unitOfWork))
+            if (dbContext.Items.Any())
                 return;
 
             var items = ReadItemsInitialFromDisk()
@@ -49,54 +40,29 @@ namespace Items.Data
                         Price = i.Price,
                         Categories = i
                             .Categories
-                            .Select(c => new ItemCategory { DisplayName = c })
+                            .Select(c => GetOrCreateCategory(dbContext, c))
                             .ToList()
                     })
                 .ToArray();
 
             foreach (var item in items)
             {
-                unitOfWork.Items.AddNewItem(item);
+                dbContext.Items.Add(item);
             }
 
-            unitOfWork.SaveChanges();
-            transaction.Commit();
+            dbContext.SaveChanges();
         }
 
-        private void ReduceCategories()
+        private static ItemCategory GetOrCreateCategory(ItemsDbContext dbContext, string displayName)
         {
-            using var dbContext = _dbContextFactory.CreateDbContext();
-            var categories = dbContext.ItemsCategory.Include(ic => ic.Items).ToArray();
-
-            foreach (var category in categories)
-            {
-                var categoryItems = dbContext
-                    .ItemsCategory
-                    .Where(ic => ic.DisplayName == category.DisplayName)
-                    .SelectMany(ic => ic.Items)
-                    .ToArray();
-
-                var newCategory = new ItemCategory { DisplayName = category.DisplayName, Items = categoryItems };
-
-                var categoriesToDelete = dbContext
-                    .ItemsCategory
-                    .Where(ic => ic.DisplayName == category.DisplayName)
-                    .ToArray();
-
-                dbContext.ItemsCategory.RemoveRange(categoriesToDelete);
-                dbContext.SaveChanges();
-                dbContext.ItemsCategory.Add(newCategory);
-                dbContext.SaveChanges();
-            }
-
+            return dbContext
+                .ItemsCategory
+                .Where(ic => ic.DisplayName == displayName)
+                .SingleOrDefault()
+                ?? new ItemCategory { DisplayName = displayName };
         }
 
-        private bool ShouldInitialize(IUnitOfWork unitOfWork)
-        {
-            return unitOfWork.Items.IsEmpty();
-        }
-
-        private IEnumerable<CreateItemDto> ReadItemsInitialFromDisk()
+        private static IEnumerable<CreateItemDto> ReadItemsInitialFromDisk()
         {
             var pathToJson = Path.Combine("Data", "ItemsInitial.json");
             var json = File.ReadAllText(pathToJson, Encoding.UTF8);
