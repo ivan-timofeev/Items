@@ -7,6 +7,7 @@ using Items.Models.DataTransferObjects.Item;
 using Items.Models.DataTransferObjects;
 using System.Text.Json;
 using Items.Queries;
+using Items.Commands;
 
 namespace Items.Controllers;
 
@@ -15,10 +16,14 @@ namespace Items.Controllers;
 public class ItemsController : ControllerBase
 {
     private readonly IQueriesFactory _queriesFactory;
+    private readonly ICommandsFactory _commandsFactory;
 
-    public ItemsController(IQueriesFactory queriesFactory)
+    public ItemsController(
+        IQueriesFactory queriesFactory,
+        ICommandsFactory commandsFactory)
     {
         _queriesFactory = queriesFactory;
+        _commandsFactory = commandsFactory;
     }
 
     // GET: api/items/ ? page=1 & pageSize=10
@@ -32,8 +37,6 @@ public class ItemsController : ControllerBase
         [FromQuery] string? filter = default,
         [FromQuery] string? sort = default)
     {
-        // TODO move to services, govnocode
-
         var parsedFilter = filter != null
             ? JsonSerializer.Deserialize<FilterDto>(filter)
             : null;
@@ -58,14 +61,34 @@ public class ItemsController : ControllerBase
         return Ok(result);
     }
 
+    // GET: api/Items/GetItemsList ? ids={guid} & ids={guid} ...
+    [HttpGet(template: "GetItemsList", Name = "GetItemsList")]
+    [ProducesResponseType(typeof(ItemDto), StatusCodes.Status200OK)]
+    [ProducesErrorResponseType(typeof(ErrorDto))]
+    public async Task<IActionResult> GetItemsListAsync(
+        [FromQuery] IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken)
+    {
+        var result = await _queriesFactory
+            .CreateGetItemsListQuery(ids)
+            .ExecuteAsync(cancellationToken);
+
+        return Ok(result);
+    }
+
     // POST: api/items/
-    [HttpPost(Name = "CreateItem")]
+    [HttpPut("{id:guid}", Name = "UpdateItem")]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
     [ProducesErrorResponseType(typeof(ErrorDto))]
-    public IActionResult CreateNew([FromBody, BindRequired] CreateItemDto createItemDto)
+    public async Task<IActionResult> UpdateItem(
+        [FromRoute] Guid id,
+        [FromBody, BindRequired] ItemDto itemDto,
+        CancellationToken cancellationToken)
     {
+        await _commandsFactory
+            .CreateUpdateItemCommand(id, itemDto)
+            .ExecuteAsync(cancellationToken);
 
         return Ok();
     }
 }
-
