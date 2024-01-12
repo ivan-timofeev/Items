@@ -32,7 +32,7 @@ public class ItemsController : ControllerBase
         [FromQuery] string? filter = default,
         [FromQuery] string? sort = default)
     {
-        // TODO вынести это все в сервисы, нужно избавиться от этого лютого дерьма
+        // TODO move to services, govnocode
 
         var parsedFilter = filter != null
             ? JsonSerializer.Deserialize<FilterDto>(filter)

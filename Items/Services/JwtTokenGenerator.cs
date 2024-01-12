@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Items.Services
 {
-    public class JwtTokenGenerator : IJwtTokenGenerator
+    internal sealed class JwtTokenGenerator : IJwtTokenGenerator
     {
         private readonly IConfiguration _configuration;
 

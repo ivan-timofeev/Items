@@ -38,6 +38,7 @@ public class Startup
         services.AddTransient<ICommandsFactory, CommandsFactory>();
         services.AddTransient<IQueriesFactory, QueriesFactory>();
         services.AddTransient<IDatabaseInitializer, DatabaseInitializer>();
+        services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddResponseCaching();
     }
  
