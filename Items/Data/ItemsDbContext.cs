@@ -3,11 +3,11 @@ using Items.Models;
 
 namespace Items.Data;
 
-public sealed class ItemsDbContext : DbContext
+public class ItemsDbContext : DbContext
 {
-    public DbSet<Item> Items { get; set; }
-    public DbSet<ItemCategory> ItemsCategory { get; set; }
-    public DbSet<User> Users { get; set; }
+    public virtual DbSet<Item> Items { get; set; }
+    public virtual DbSet<ItemCategory> ItemsCategory { get; set; }
+    public virtual DbSet<User> Users { get; set; }
 
     public ItemsDbContext(DbContextOptions options) : base(options)
     {
@@ -17,4 +17,6 @@ public sealed class ItemsDbContext : DbContext
         ItemsCategory = Set<ItemCategory>();
         Users = Set<User>();
     }
+
+    protected ItemsDbContext() { }
 }

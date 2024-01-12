@@ -45,7 +45,7 @@ namespace Items.Commands
             item.OverallRating = _itemDto.OverallRating;
             item.Categories = await GetOrCreateItemCategories(_itemDto.Categories);
 
-            _dbContext.Update(item);
+            _dbContext.Items.Update(item);
             _memoryCache.Remove(Item.GetCacheKey(_itemId));
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
