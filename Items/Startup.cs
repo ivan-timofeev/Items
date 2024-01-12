@@ -1,12 +1,12 @@
-using IdentityProvider;
-using Items.BackgroundServices;
+using Items.Commands;
 using Items.Data;
+using Items.Helpers;
 using Items.Models.DataTransferObjects;
+using Items.Queries;
 using Items.Services;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using Prometheus;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -33,8 +33,10 @@ public class Startup
         services.AddDbContextFactory<ItemsDbContext>(
             options => options.UseNpgsql(connectionString));
 
-        services.AddTransient<IItemsRepository, ItemsRepository>();
-        services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
+        services.AddMemoryCache();
+        services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddTransient<ICommandsFactory, CommandsFactory>();
+        services.AddTransient<IQueriesFactory, QueriesFactory>();
         services.AddTransient<IDatabaseInitializer, DatabaseInitializer>();
         services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddResponseCaching();
@@ -66,7 +68,7 @@ public class Startup
                     new ErrorDto
                     {
                         ErrorMessage = error.Message,
-                        Details = error.ToString()
+                        Data = error.Data
                     });
             });
         });

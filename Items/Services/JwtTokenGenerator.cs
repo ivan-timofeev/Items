@@ -6,12 +6,7 @@ using System.Text;
 
 namespace Items.Services
 {
-    public interface IJwtTokenGenerator
-    {
-        string GenerateToken(User user);
-    }
-
-    public class JwtTokenGenerator : IJwtTokenGenerator
+    internal sealed class JwtTokenGenerator : IJwtTokenGenerator
     {
         private readonly IConfiguration _configuration;
 

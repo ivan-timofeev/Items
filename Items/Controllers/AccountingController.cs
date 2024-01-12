@@ -1,6 +1,4 @@
-﻿using Items.Models.DataTransferObjects.Item;
-using Items.Models.DataTransferObjects;
-using Microsoft.AspNetCore.Mvc;
+
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Items.Models.DataTransferObjects.Accounting;
 using Items.Data;
@@ -8,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Security.Cryptography;
 using Items.Models;
-using System.Threading;
 using Items.Services;
 
 namespace Items.Controllers
@@ -106,3 +103,4 @@ namespace Items.Controllers
         }
     }
 }
+
