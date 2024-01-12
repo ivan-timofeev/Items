@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.EntityFrameworkCore;
-using Items.Data;
-using Items.Models;
 using Items.Models.DataTransferObjects.Item;
 using Items.Models.DataTransferObjects;
 using System.Text.Json;
@@ -26,7 +23,7 @@ public class ItemsController : ControllerBase
         _commandsFactory = commandsFactory;
     }
 
-    // GET: api/items/ ? page=1 & pageSize=10
+    // GET: api/items/ ? page=1 & pageSize=10 & filter={filterJsonEncoded} & sort={string}
     [HttpGet(Name = "GetItemsWithPagination")]
     [ProducesResponseType(typeof(IEnumerable<ItemDto>), StatusCodes.Status200OK)]
     [ProducesErrorResponseType(typeof(ErrorDto))]
@@ -76,7 +73,7 @@ public class ItemsController : ControllerBase
         return Ok(result);
     }
 
-    // POST: api/items/
+    // PUT: api/items/:id
     [HttpPut("{id:guid}", Name = "UpdateItem")]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
     [ProducesErrorResponseType(typeof(ErrorDto))]
