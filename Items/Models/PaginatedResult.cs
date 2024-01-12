@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace Items.Models.DataTransferObjects
+namespace Items.Models
 {
     public class PaginatedResult<T>
     {

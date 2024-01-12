@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Items.Models.DataTransferObjects
 {
@@ -9,6 +10,13 @@ namespace Items.Models.DataTransferObjects
 
         [JsonPropertyName("selectedPriceRange")]
         public required PriceRange SelectedPriceRange { get; init; }
+
+        public override string ToString()
+        {
+            var selectedCategories = $"cat={string.Join(',', SelectedCategories)};";
+            var selectedPriceRange = $"f={SelectedPriceRange.From},to={SelectedPriceRange.To};";
+            return $"{{{selectedCategories}{selectedPriceRange}}}";
+        }
     }
 
     public sealed class PriceRange

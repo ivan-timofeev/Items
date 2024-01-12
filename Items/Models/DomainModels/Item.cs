@@ -15,4 +15,9 @@ public class Item
     {
         Categories = new List<ItemCategory>();
     }
+
+    public static string GetCacheKey(Guid id)
+    {
+        return $"DomainModels:Item:{id}";
+    }
 }

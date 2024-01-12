@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
-namespace IdentityProvider;
+namespace Items.Helpers;
 
-public static class AddJwtAuthExtension
+public static class IServiceCollectionExtensions
 {
     public static IServiceCollection AddJwtAuth(this IServiceCollection serviceCollection, IConfiguration configuration)
     {
@@ -34,11 +34,13 @@ public static class AddJwtAuthExtension
     {
         serviceCollection.AddSwaggerGen(c =>
         {
-            c.SwaggerDoc("v1", new OpenApiInfo {
+            c.SwaggerDoc("v1", new OpenApiInfo
+            {
                 Title = Assembly.GetExecutingAssembly().GetName().Name,
                 Version = "v1"
             });
-            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme() {
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+            {
                 Name = "Authorization",
                 Type = SecuritySchemeType.ApiKey,
                 Scheme = "Bearer",

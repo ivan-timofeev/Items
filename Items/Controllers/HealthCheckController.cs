@@ -1,4 +1,5 @@
-﻿using Items.Services;
+﻿using Items.Commands;
+using Items.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,11 +13,11 @@ namespace Items.Controllers
     [ApiController]
     public class HealthCheckController : ControllerBase
     {
-        private readonly IUnitOfWorkFactory _unitOfWorkFactory;
+        private readonly ICommandsFactory _commandsFactory;
 
-        public HealthCheckController(IUnitOfWorkFactory unitOfWorkFactory)
+        public HealthCheckController(ICommandsFactory commandsFactory)
         {
-            _unitOfWorkFactory = unitOfWorkFactory;
+            _commandsFactory = commandsFactory;
         }
 
         // GET: api/HealthCheck
@@ -36,12 +37,13 @@ namespace Items.Controllers
 
         // GET: api/HealthCheck/Database
         [HttpGet("Database")]
-        public IActionResult DatabaseHealthCheck()
+        public async Task<IActionResult> DatabaseHealthCheck(CancellationToken cancellationToken)
         {
             try
             {
-                using var unitOfWork = _unitOfWorkFactory.CreateUnitOfWork();
-                unitOfWork.Items.GetItems(new[] { Guid.Empty });
+                await _commandsFactory
+                    .CreateEnsureIsDatabaseAliveCommand()
+                    .ExecuteAsync(cancellationToken);
 
                 return Ok(new { Status = "OK" });
             }
