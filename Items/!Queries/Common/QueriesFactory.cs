@@ -52,5 +52,14 @@ namespace Items.Queries
                 ? new GetItemQueryCached(itemId, _memoryCache, originQuery)
                 : originQuery;
         }
+
+        public IQuery<IEnumerable<CategoryDto>> CreateGetAllCategoriesQuery(bool useMemoryCache = true)
+        {
+            var originQuery = new GetAllCategoriesQuery(_dbContextFactory.CreateDbContext());
+
+            return useMemoryCache
+                ? new GetAllCategoriesQueryCached(_memoryCache, originQuery)
+                : originQuery;
+        }
     }
 }

@@ -20,5 +20,8 @@ namespace Items.Queries
         IQuery<ItemDto> CreateGetItemQuery(
             Guid itemId,
             bool useMemoryCache = true);
+
+        IQuery<IEnumerable<CategoryDto>> CreateGetAllCategoriesQuery(
+            bool useMemoryCache = true);
     }
 }
