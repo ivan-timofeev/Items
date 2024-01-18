@@ -28,4 +28,12 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.14" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Items.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Items.Abstractions\Items.Abstractions.csproj" />
+  </ItemGroup>
+
 </Project>

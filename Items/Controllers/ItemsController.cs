@@ -2,9 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Items.Models.DataTransferObjects.Item;
 using Items.Models.DataTransferObjects;
-using System.Text.Json;
-using Items.Queries;
 using Items.Commands;
+using Items.Abstractions.Queries.Factories;
+using Items.Models.Queries;
+using System.Text.Json;
 
 namespace Items.Controllers;
 
@@ -12,14 +13,11 @@ namespace Items.Controllers;
 [Route("api/[controller]")]
 public class ItemsController : ControllerBase
 {
-    private readonly IQueriesFactory _queriesFactory;
     private readonly ICommandsFactory _commandsFactory;
 
     public ItemsController(
-        IQueriesFactory queriesFactory,
         ICommandsFactory commandsFactory)
     {
-        _queriesFactory = queriesFactory;
         _commandsFactory = commandsFactory;
     }
 
@@ -28,6 +26,7 @@ public class ItemsController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<ItemDto>), StatusCodes.Status200OK)]
     [ProducesErrorResponseType(typeof(ErrorDto))]
     public async Task<IActionResult> GetItemsByPage(
+        [FromServices] IItemsPageQueryHandlerFactory itemsPageQueryHandlerFactory,
         [FromQuery] int page,
         [FromQuery] int pageSize,
         CancellationToken cancellationToken,
@@ -38,9 +37,17 @@ public class ItemsController : ControllerBase
             ? JsonSerializer.Deserialize<FilterDto>(filter)
             : null;
 
-        var result = await _queriesFactory
-            .CreateGetItemsPageQuery(page, pageSize, parsedFilter, sort)
-            .ExecuteAsync(cancellationToken);
+        var result = await itemsPageQueryHandlerFactory
+            .CreateCachedHandler()
+            .ExecuteAsync(
+                new ItemsPageQuery
+                {
+                    Page = page,
+                    PageSize = pageSize,
+                    Filter = parsedFilter,
+                    Sort = sort
+                },
+                cancellationToken);
 
         return Ok(result);
     }
@@ -49,26 +56,37 @@ public class ItemsController : ControllerBase
     [HttpGet("{id:guid}", Name = "GetItem")]
     [ProducesResponseType(typeof(ItemDto), StatusCodes.Status200OK)]
     [ProducesErrorResponseType(typeof(ErrorDto))]
-    public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Get(
+        [FromServices] IItemQueryHandlerFactory itemQueryHandlerFactory,
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
     {
-        var result = await _queriesFactory
-            .CreateGetItemQuery(id)
-            .ExecuteAsync(cancellationToken);
+        var result = await itemQueryHandlerFactory
+            .CreateCachedHandler()
+            .ExecuteAsync(
+                new ItemQuery
+                {
+                    ItemId = id 
+                },
+                cancellationToken);
 
         return Ok(result);
     }
 
     // GET: api/Items/GetItemsList ? ids={guid} & ids={guid} ...
-    [HttpGet(template: "GetItemsList", Name = "GetItemsList")]
-    [ProducesResponseType(typeof(ItemDto), StatusCodes.Status200OK)]
+    [HttpGet(template: "GetItemsList", Name = "GetItemList")]
+    [ProducesResponseType(typeof(IEnumerable<ItemDto>), StatusCodes.Status200OK)]
     [ProducesErrorResponseType(typeof(ErrorDto))]
-    public async Task<IActionResult> GetItemsListAsync(
+    public async Task<IActionResult> GetItemListAsync(
+        [FromServices] IItemListQueryHandlerFactory itemListQueryHandlerFactory,
         [FromQuery] IReadOnlyCollection<Guid> ids,
         CancellationToken cancellationToken)
     {
-        var result = await _queriesFactory
-            .CreateGetItemsListQuery(ids)
-            .ExecuteAsync(cancellationToken);
+        var result = await itemListQueryHandlerFactory
+            .CreateCachedHandler()
+            .ExecuteAsync(
+                new ItemListQuery { ItemsIds = ids },
+                cancellationToken);
 
         return Ok(result);
     }

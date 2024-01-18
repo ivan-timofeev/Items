@@ -1,22 +1,21 @@
-﻿using Items._Commands;
+﻿using Items.Abstractions.Services;
 using Items.Data;
 using Items.Models.DataTransferObjects.Item;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace Items.Commands
 {
     public class CommandsFactory : ICommandsFactory
     {
         private readonly IDbContextFactory<ItemsDbContext> _dbContextFactory;
-        private readonly IMemoryCache _memoryCache;
+        private readonly ICacheService _cacheService;
 
         public CommandsFactory(
             IDbContextFactory<ItemsDbContext> dbContextFactory,
-            IMemoryCache memoryCache)
+            ICacheService cacheService)
         {
             _dbContextFactory = dbContextFactory;
-            _memoryCache = memoryCache;
+            _cacheService = cacheService;
         }
 
         public ICommand CreateEnsureIsDatabaseAliveCommand()
@@ -30,7 +29,7 @@ namespace Items.Commands
                 itemId,
                 itemDto,
                 _dbContextFactory.CreateDbContext(),
-                _memoryCache);
+                _cacheService);
         }
     }
 }

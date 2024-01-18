@@ -1,30 +1,28 @@
-﻿using Items.Models.DataTransferObjects.Item;
-using Items.Models.DataTransferObjects;
-using Items.Models;
+﻿using Items.Abstractions.Queries.Handlers;
 using Items.Data;
-using Items.Models.Exceptions;
 using Items.Helpers;
-using Microsoft.EntityFrameworkCore;
+using Items.Models;
+using Items.Models.DataTransferObjects.Item;
+using Items.Models.Queries;
 
-namespace Items.Queries
+namespace Items.Queries.Handlers
 {
-
-    internal sealed class GetItemQuery : IQuery<ItemDto>
+    internal sealed class ItemQueryHandler : IItemQueryHandler
     {
-        private readonly Guid _itemId;
-        private readonly ItemsDbContext _dbContext;
+        private readonly DbContextProvider _dbContextProvider;
 
-        public GetItemQuery(Guid itemId, ItemsDbContext dbContext)
+        public ItemQueryHandler(DbContextProvider dbContextProvider)
         {
-            _itemId = itemId;
-            _dbContext = dbContext;
+            _dbContextProvider = dbContextProvider;
         }
 
-        public async Task<ItemDto> ExecuteAsync(CancellationToken cancellationToken)
+        public async Task<ItemDto> ExecuteAsync(ItemQuery query, CancellationToken cancellationToken)
         {
-            return await _dbContext
+            var dbContext = await _dbContextProvider.Invoke(cancellationToken);
+
+            return await dbContext
                 .Items
-                .Where(i => i.Id == _itemId)
+                .Where(i => i.Id == query.ItemId)
                 .Select(i =>
                     new ItemDto
                     {
@@ -41,7 +39,7 @@ namespace Items.Queries
                     })
                 .SingleOrThrowNotFoundExceptionAsync(
                     nameof(Item),
-                    _itemId.ToString(),
+                    query.ItemId.ToString(),
                     cancellationToken);
         }
     }

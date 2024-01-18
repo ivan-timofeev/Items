@@ -1,8 +1,8 @@
+using Items.Abstractions.Services;
 using Items.Commands;
 using Items.Data;
 using Items.Helpers;
 using Items.Models.DataTransferObjects;
-using Items.Queries;
 using Items.Services;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http.Features;
@@ -33,13 +33,13 @@ public class Startup
         services.AddDbContextFactory<ItemsDbContext>(
             options => options.UseNpgsql(connectionString));
 
-        services.AddMemoryCache();
+        services.AddQueries();
+        services.AddSingleton<ICacheService, CacheService>();
         services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddTransient<ICommandsFactory, CommandsFactory>();
-        services.AddTransient<IQueriesFactory, QueriesFactory>();
+        services.AddTransient<IDateTimeProvider, DateTimeProvider>();
         services.AddTransient<IDatabaseInitializer, DatabaseInitializer>();
         services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();
-        services.AddResponseCaching();
     }
  
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

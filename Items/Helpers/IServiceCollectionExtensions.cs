@@ -1,5 +1,7 @@
 using System.Reflection;
 using System.Text;
+using Items.Abstractions.Queries.Factories;
+using Items.Queries.Factories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -8,6 +10,17 @@ namespace Items.Helpers;
 
 public static class IServiceCollectionExtensions
 {
+    public static IServiceCollection AddQueries(this IServiceCollection serviceCollection)
+    {
+        serviceCollection
+            .AddTransient<IItemQueryHandlerFactory, ItemQueryHandlerFactory>()
+            .AddTransient<IItemsPageQueryHandlerFactory, ItemsPageQueryHandlerFactory>()
+            .AddTransient<IItemListQueryHandlerFactory, ItemListQueryHandlerFactory>()
+            .AddTransient<ICategoriesQueryHandlerFactory, CategoriesQueryHandlerFactory>();
+
+        return serviceCollection;
+    }
+
     public static IServiceCollection AddJwtAuth(this IServiceCollection serviceCollection, IConfiguration configuration)
     {
         var jwtKey = configuration["Jwt:Key"]

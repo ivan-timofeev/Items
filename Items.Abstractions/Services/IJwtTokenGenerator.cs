@@ -1,6 +1,6 @@
 ﻿using Items.Models;
 
-namespace Items.Services
+namespace Items.Abstractions.Services
 {
     public interface IJwtTokenGenerator
     {

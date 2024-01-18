@@ -1,31 +1,33 @@
-﻿using Items.Data;
+﻿using Items.Abstractions.Services;
+using Items.Data;
 using Items.Helpers;
 using Items.Models;
 using Items.Models.DataTransferObjects.Item;
+using Items.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Items.Commands
 {
-    public class UpdateItemCommand : ICommand
+    internal sealed class UpdateItemCommand : ICommand
     {
         private readonly Guid _itemId;
         private readonly ItemDto _itemDto;
 
         private readonly ItemsDbContext _dbContext;
-        private readonly IMemoryCache _memoryCache;
+        private readonly ICacheService _cacheService;
 
         public UpdateItemCommand(
             Guid itemId,
             ItemDto itemDto,
             ItemsDbContext dbContext,
-            IMemoryCache memoryCache)
+            ICacheService cacheService)
         {
             _itemId = itemId;
             _itemDto = itemDto;
 
             _dbContext = dbContext;
-            _memoryCache = memoryCache;
+            _cacheService = cacheService;
         }
 
         public async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -46,7 +48,9 @@ namespace Items.Commands
             item.Categories = await GetOrCreateItemCategories(_itemDto.Categories);
 
             _dbContext.Items.Update(item);
-            _memoryCache.Remove(Item.GetCacheKey(_itemId));
+            _cacheService.Delete(Item.GetCacheKey(_itemId));
+            _cacheService.Delete("ItemsPage:.*");
+            _cacheService.Delete("ItemList:.*");
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 

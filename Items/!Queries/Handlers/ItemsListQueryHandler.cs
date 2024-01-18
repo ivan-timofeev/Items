@@ -1,28 +1,30 @@
 ﻿using Items.Models.DataTransferObjects.Item;
 using Items.Data;
 using Microsoft.EntityFrameworkCore;
+using Items.Abstractions.Queries.Handlers;
+using Items.Models.Queries;
 
-namespace Items.Queries
+namespace Items.Queries.Handlers
 {
-    internal sealed class GetItemsListQuery : IQuery<IEnumerable<ItemDto>>
+    internal sealed class ItemsListQueryHandler : IItemListQueryHandler
     {
-        private readonly IReadOnlyCollection<Guid> _itemsIds;
-        private readonly ItemsDbContext _dbContext;
+        private readonly DbContextProvider _dbContextProvider;
 
-        public GetItemsListQuery(
-            IReadOnlyCollection<Guid> itemsIds,
-            ItemsDbContext dbContext)
+        public ItemsListQueryHandler(DbContextProvider dbContextProvider)
         {
-            _itemsIds = itemsIds;
-            _dbContext = dbContext;
+            _dbContextProvider = dbContextProvider;
         }
 
-        public async Task<IEnumerable<ItemDto>> ExecuteAsync(CancellationToken cancellationToken)
+        public async Task<IEnumerable<ItemDto>> ExecuteAsync(
+            ItemListQuery getItemsListQuery,
+            CancellationToken cancellationToken)
         {
-            return await _dbContext
+            var dbContext = await _dbContextProvider.Invoke(cancellationToken);
+
+            return await dbContext
                 .Items
                 .Include(i => i.Categories)
-                .Where(i => _itemsIds.Contains(i.Id))
+                .Where(i => getItemsListQuery.ItemsIds.Contains(i.Id))
                 .Select(i =>
                     new ItemDto
                     {

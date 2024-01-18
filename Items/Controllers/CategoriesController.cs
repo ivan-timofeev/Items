@@ -1,6 +1,7 @@
 ﻿using Items.Models.DataTransferObjects;
 using Microsoft.AspNetCore.Mvc;
-using Items.Queries;
+using Items.Abstractions.Queries.Factories;
+using Items.Models.Queries;
 
 namespace Items.Controllers
 {
@@ -8,22 +9,21 @@ namespace Items.Controllers
     [Route("api/[controller]")]
     public class CategoriesController : ControllerBase
     {
-        private readonly IQueriesFactory _queriesFactory;
-
-        public CategoriesController(IQueriesFactory queriesFactory)
+        public CategoriesController()
         {
-            _queriesFactory = queriesFactory;
         }
 
         // GET: api/categories/
         [HttpGet(Name = "GetAllCategories")]
         [ProducesResponseType(typeof(IEnumerable<CategoryDto>), StatusCodes.Status200OK)]
         [ProducesErrorResponseType(typeof(ErrorDto))]
-        public async Task<IActionResult> GetAllCategoriesAsync(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAllCategoriesAsync(
+            [FromServices] ICategoriesQueryHandlerFactory categoriesQueryHandlerFactory,
+            CancellationToken cancellationToken)
         {
-            var result = await _queriesFactory
-                .CreateGetAllCategoriesQuery()
-                .ExecuteAsync(cancellationToken);
+            var result = await categoriesQueryHandlerFactory
+                .CreateCachedHandler()
+                .ExecuteAsync(new CategoriesQuery(), cancellationToken);
 
             return Ok(result);
         }

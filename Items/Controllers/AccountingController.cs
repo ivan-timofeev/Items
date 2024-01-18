@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Security.Cryptography;
 using Items.Models;
-using Items.Services;
 using Microsoft.AspNetCore.Mvc;
+using Items.Abstractions.Services;
 
 namespace Items.Controllers
 {
