@@ -2,7 +2,7 @@
 using Items.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace Items._Commands
+namespace Items.Commands
 {
     internal sealed class EnsureIsDatabaseAliveCommand : ICommand
     {

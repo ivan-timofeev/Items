@@ -20,3 +20,5 @@ public class ItemsDbContext : DbContext
 
     protected ItemsDbContext() { }
 }
+
+public delegate Task<ItemsDbContext> DbContextProvider(CancellationToken cancellationToken);
