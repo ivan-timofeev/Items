@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using System.Text.Json.Serialization;
 using Items.Abstractions.Queries.Factories;
 using Items.Queries.Factories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,7 +17,8 @@ public static class IServiceCollectionExtensions
             .AddTransient<IItemQueryHandlerFactory, ItemQueryHandlerFactory>()
             .AddTransient<IItemsPageQueryHandlerFactory, ItemsPageQueryHandlerFactory>()
             .AddTransient<IItemListQueryHandlerFactory, ItemListQueryHandlerFactory>()
-            .AddTransient<ICategoriesQueryHandlerFactory, CategoriesQueryHandlerFactory>();
+            .AddTransient<ICategoriesQueryHandlerFactory, CategoriesQueryHandlerFactory>()
+            .AddTransient<IOrdersQueryHanlderFactory, OrdersQueryHandlerFactory>();
 
         return serviceCollection;
     }
@@ -59,12 +61,19 @@ public static class IServiceCollectionExtensions
                 Scheme = "Bearer",
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
-                Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer ***.***.***\"",
+                Description = """
+                    JWT Authorization header using the Bearer scheme.
+                    Enter 'Bearer' [space] and then your token in the text input below.
+                    Example: "Bearer ***.***.***"
+                    """,
             });
-            c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
                 {
-                    new OpenApiSecurityScheme {
-                        Reference = new OpenApiReference {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
                             Type = ReferenceType.SecurityScheme,
                             Id = "Bearer"
                         }
@@ -72,6 +81,17 @@ public static class IServiceCollectionExtensions
                     Array.Empty<string>()
                 }
             });
+        });
+
+        serviceCollection.ConfigureSwaggerGen(opt =>
+        {
+            opt.UseOneOfForPolymorphism();
+
+            opt.SelectDiscriminatorNameUsing(_ => "$type");
+            opt.SelectDiscriminatorValueUsing(subType => subType.BaseType!
+                .GetCustomAttributes<JsonDerivedTypeAttribute>()
+                .FirstOrDefault(x => x.DerivedType == subType)?
+                .TypeDiscriminator!.ToString());
         });
 
         return serviceCollection;

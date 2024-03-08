@@ -7,6 +7,6 @@
         public required string FirstName { get; set; }
         public required string LastName { get; set; }
         public required string PasswordHash { get; set; }
-        public string? CompanyName { get; set; }
+        public required IList<Order> Orders { get; set; }
     }
 }

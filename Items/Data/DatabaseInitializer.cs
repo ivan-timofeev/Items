@@ -24,6 +24,8 @@ namespace Items.Data
         public void InitializeDatabase()
         {
             var dbContext = _dbContextFactory.CreateDbContext();
+            //dbContext.Database.EnsureDeleted();
+            dbContext.Database.EnsureCreated();
 
             if (dbContext.Items.Any())
                 return;
@@ -55,11 +57,19 @@ namespace Items.Data
 
         private static ItemCategory GetOrCreateCategory(ItemsDbContext dbContext, string displayName)
         {
-            return dbContext
+            var category = dbContext
                 .ItemsCategory
                 .Where(ic => ic.DisplayName == displayName)
-                .SingleOrDefault()
-                ?? new ItemCategory { DisplayName = displayName };
+                .SingleOrDefault();
+
+            if (category == default)
+            {
+                category = new ItemCategory { DisplayName = displayName };
+                dbContext.ItemsCategory.Add(category);
+                dbContext.SaveChanges();
+            }
+
+            return category;
         }
 
         private static IEnumerable<CreateItemDto> ReadItemsInitialFromDisk()

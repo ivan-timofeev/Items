@@ -9,13 +9,20 @@ public class ItemsDbContext : DbContext
     public virtual DbSet<ItemCategory> ItemsCategory { get; set; }
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<Order> Orders { get; set; }
+    public virtual DbSet<OrderItem> OrderItems { get; set; }
+    public virtual DbSet<OrderStatusHistoryItem> OrderStatusHistoryItems { get; set; }
+    public virtual DbSet<DeliveryDetails> DeliveryDetails { get; set; }
+
     public ItemsDbContext(DbContextOptions options) : base(options)
     {
-        //Database.EnsureDeleted();
-        Database.EnsureCreated();
         Items = Set<Item>();
         ItemsCategory = Set<ItemCategory>();
         Users = Set<User>();
+        Orders = Set<Order>();
+        OrderItems = Set<OrderItem>();
+        OrderStatusHistoryItems = Set<OrderStatusHistoryItem>();
+        DeliveryDetails = Set<DeliveryDetails>();
     }
 
     protected ItemsDbContext() { }
