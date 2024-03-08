@@ -1,8 +1,12 @@
+using Items.Abstractions.Commands.Factories;
 using Items.Abstractions.Services;
 using Items.Commands;
+using Items.Commands.Factories;
+using Items.Controllers;
 using Items.Data;
 using Items.Helpers;
 using Items.Models.DataTransferObjects;
+using Items.Models.Exceptions;
 using Items.Services;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http.Features;
@@ -34,6 +38,9 @@ public class Startup
             options => options.UseNpgsql(connectionString));
 
         services.AddQueries();
+
+        services.AddTransient<ICreateOrderCommandHandlerFactory, CreateOrderCommandHandlerFactory>();
+
         services.AddSingleton<ICacheService, CacheService>();
         services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddTransient<ICommandsFactory, CommandsFactory>();
@@ -63,6 +70,11 @@ public class Startup
                     .Features
                     .GetRequiredFeature<IExceptionHandlerPathFeature>()
                     .Error;
+
+                if (error is BusinessException)
+                {
+                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                }
 
                 await context.Response.WriteAsJsonAsync(
                     new ErrorDto

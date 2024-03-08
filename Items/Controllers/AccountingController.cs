@@ -80,8 +80,8 @@ namespace Items.Controllers
                 Email = registerDto.Email,
                 FirstName = registerDto.FirstName,
                 LastName = registerDto.LastName,
-                CompanyName = registerDto.CompanyName,
-                PasswordHash = GetSha256(registerDto.Password)
+                PasswordHash = GetSha256(registerDto.Password),
+                Orders = new List<Order>()
             };
 
             dbContext.Users.Add(newUser);
