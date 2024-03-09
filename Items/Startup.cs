@@ -1,4 +1,4 @@
-using Items.Abstractions.Commands.Factories;
+using Items.Abstractions.Commands;
 using Items.Abstractions.Commands.Handlers;
 using Items.Abstractions.Services;
 using Items.Commands;
@@ -43,19 +43,12 @@ public class Startup
         services.AddDbContextFactory<ItemsDbContext>(
             options => options.UseNpgsql(connectionString));
 
-        services.AddQueries();
-
-        services.AddTransient<
-            ICommandHandlerFactory<ICreateOrderCommandHandler>,
-            CommonCommandHandlerFactory<ICreateOrderCommandHandler, CreateOrderCommandHandler>>();
-
-        services.AddTransient<
-            ICommandHandlerFactory<IProcessCreatedPaymentsCommandHandler>,
-            CommonCommandHandlerFactory<IProcessCreatedPaymentsCommandHandler, ProcessCreatedPaymentsCommandHandler>>();
+        services
+            .AddQueries()
+            .AddCommands();
 
         services.AddSingleton<ICacheService, CacheService>();
         services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();
-        services.AddTransient<ICommandsFactory, CommandsFactory>();
         services.AddTransient<IDateTimeProvider, DateTimeProvider>();
         services.AddTransient<IDatabaseInitializer, DatabaseInitializer>();
         services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();

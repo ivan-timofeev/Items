@@ -1,11 +1,11 @@
 ﻿using Items.Abstractions.Commands.Handlers;
 using Items.Abstractions.Services;
 using Items.Data;
-using Items.Models.DataTransferObjects.Order;
 using Items.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using Serilog;
+using Items.Models.Commands;
 
 namespace Items.Commands.Handlers
 {

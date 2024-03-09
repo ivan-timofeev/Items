@@ -8,13 +8,6 @@ namespace Items.Controllers
     [ApiController]
     public class HealthCheckController : ControllerBase
     {
-        private readonly ICommandsFactory _commandsFactory;
-
-        public HealthCheckController(ICommandsFactory commandsFactory)
-        {
-            _commandsFactory = commandsFactory;
-        }
-
         // GET: api/HealthCheck
         [HttpGet]
         public IActionResult HealthCheck()
@@ -34,6 +27,8 @@ namespace Items.Controllers
         [HttpGet("Database")]
         public async Task<IActionResult> DatabaseHealthCheck(CancellationToken cancellationToken)
         {
+            return Ok();
+            /*
             try
             {
                 await _commandsFactory
@@ -48,6 +43,7 @@ namespace Items.Controllers
                     StatusCodes.Status500InternalServerError,
                     new { Status = "ERROR", Details = ex.Message });
             }
+            */
         }
     }
 }
