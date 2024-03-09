@@ -11,15 +11,15 @@ namespace Items.Controllers
     [ApiController]
     public class CartsController : ControllerBase
     {
-        [HttpPost]
-        public async Task<IActionResult> ApplyPromocode(
+        [HttpPost(template: "ApplyPromocode")]
+        public async Task<IActionResult> ApplyPromocodeAsync(
             [FromServices] IApplyPromocodeQueryHandlerFactory applyPromocodeQueryHandlerFactory,
-            [FromBody] ApplyPromocodeQuery applyPromocodeCommandDto,
+            [FromBody] ApplyPromocodeQuery applyPromocodeQuery,
             CancellationToken cancellationToken)
         {
             var result = await applyPromocodeQueryHandlerFactory
                    .CreateHandler()
-                   .ExecuteAsync(applyPromocodeCommandDto, cancellationToken);
+                   .ExecuteAsync(applyPromocodeQuery, cancellationToken);
 
             return Ok(result);
         }

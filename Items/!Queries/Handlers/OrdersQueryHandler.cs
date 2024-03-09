@@ -35,6 +35,15 @@ namespace Items.Queries.Handlers
 
             orders = FilterByQueryType(orders, ordersQuery);
 
+            orders = orders
+                .OrderByDescending(o => o
+                    .OrderStatusHistory
+                    .OrderByDescending(osh => osh.EnterDateTimeUtc)
+                    .First()
+                    .EnterDateTimeUtc)
+                .AsSingleQuery()
+                .AsNoTracking();
+
             var result = await orders
                 .Select(o =>
                     new OrderDto

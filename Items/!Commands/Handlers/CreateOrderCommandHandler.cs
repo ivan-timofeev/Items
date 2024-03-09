@@ -5,8 +5,8 @@ using Items.Models.DataTransferObjects.Order;
 using Items.Models.Exceptions;
 using Items.Models;
 using Microsoft.EntityFrameworkCore;
-using Items.Helpers;
 using System.Data;
+using Quartz;
 
 namespace Items.Commands.Handlers
 {
@@ -14,127 +14,202 @@ namespace Items.Commands.Handlers
     {
         private readonly DbContextProvider _dbContextProvider;
         private readonly IDateTimeProvider _dateTimeProvider;
+        private readonly ISchedulerFactory _schedulerFactory;
 
         public CreateOrderCommandHandler(
             DbContextProvider dbContextProvider,
-            IDateTimeProvider dateTimeProvider)
+            IDateTimeProvider dateTimeProvider,
+            ISchedulerFactory schedulerFactory)
         {
             _dbContextProvider = dbContextProvider;
             _dateTimeProvider = dateTimeProvider;
+            _schedulerFactory = schedulerFactory;
         }
 
         public async Task ExecuteAsync(
-            CreateOrderBase createOrderDto,
+            CreateOrderCommandBase createOrderCommand,
             CancellationToken cancellationToken)
         {
             var dbContext = await _dbContextProvider.Invoke(cancellationToken);
             using var transaction = dbContext.Database.BeginTransaction(IsolationLevel.Serializable);
-            var utcNow = _dateTimeProvider.GetCurrentDateTimeUtc();
 
-            var items = await dbContext
+            var order = new Order
+            {
+                CreateDateTimeUtc = _dateTimeProvider.GetCurrentDateTimeUtc(),
+                OrderItems = new List<OrderItem>(),
+                OrderStatusHistory =
+                    new List<OrderStatusHistoryItem>
+                    {
+                        new()
+                        {
+                            SerialNumber = 1,
+                            EnterDateTimeUtc = _dateTimeProvider.GetCurrentDateTimeUtc(),
+                            OrderStatus = OrderStatus.Created
+                        }
+                    },
+                DeliveryDetails =
+                    new DeliveryDetails
+                    {
+                        Email = createOrderCommand.DeliveryDetails.Email,
+                        FirstName = createOrderCommand.DeliveryDetails.FirstName,
+                        LastName = createOrderCommand.DeliveryDetails.LastName,
+                        CompanyName = createOrderCommand.DeliveryDetails.CompanyName
+                    }
+            };
+
+            var requestedProducts = await GetOrderItemsAsync(dbContext, createOrderCommand, cancellationToken);
+
+            ReserveProducts(order, createOrderCommand, requestedProducts);
+            
+            switch (createOrderCommand)
+            {
+                case CreateOrderFromAnonCommand createOrderFromAnon:
+                    await CreateNewUserAsync(dbContext, order, createOrderFromAnon);
+                    break;
+
+                case CreateOrderFromUserCommand createOrderFromUser:
+                    await UpdateUserAsync(dbContext, order, createOrderFromUser);
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Not supported create order command type.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(createOrderCommand.Promocode))
+            {
+                ApplyPromocode(order, createOrderCommand.Promocode);
+            }
+
+            CreatePayment(dbContext, order);
+
+            dbContext.Orders.Add(order);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            var scheduler = await _schedulerFactory.GetScheduler();
+            await scheduler.TriggerJob(new JobKey("ProcessCreatedPaymentsJob"));
+        }
+
+        private static async Task<IEnumerable<Item>> GetOrderItemsAsync(
+            ItemsDbContext dbContext,
+            CreateOrderCommandBase createOrderCommand,
+            CancellationToken cancellationToken)
+        {
+            var result = await dbContext
                 .Items
                 .Where(i =>
-                    createOrderDto
+                    createOrderCommand
                         .OrderItems
                         .Select(od => od.ItemId)
                         .ToArray()
                         .Contains(i.Id))
                 .ToArrayAsync(cancellationToken);
 
-            var order = new Order
+            return result;
+        }
+
+        private void ReserveProducts(Order order, CreateOrderCommandBase createOrderCommand, IEnumerable<Item> requestedProducts)
+        {
+            foreach (var orderPosition in createOrderCommand.OrderItems)
             {
-                CreateDateTimeUtc = utcNow,
-                OrderItems = createOrderDto
-                    .OrderItems
-                    .Select(oi =>
-                        new OrderItem
-                        {
-                            ItemId = oi.ItemId,
-                            Quantity = oi.Quantity,
-                            Price = items.Single(i => i.Id == oi.ItemId).Price
-                        })
-                    .ToList(),
-                OrderStatusHistory = new List<OrderStatusHistoryItem>
+                var requestedProduct = requestedProducts
+                    .Where(p => p.Id == orderPosition.ItemId)
+                    .SingleOrDefault();
+
+                if (requestedProduct == default)
                 {
-                    new()
-                    {
-                        EnterDateTimeUtc = utcNow,
-                        OrderStatus = OrderStatus.Created
-                    },
-                    new()
-                    {
-                        EnterDateTimeUtc = utcNow,
-                        OrderStatus = OrderStatus.WaitingForPayment
-                    }
-                },
-                DeliveryDetails = new DeliveryDetails
-                {
-                    Email = createOrderDto.DeliveryDetails.Email,
-                    FirstName = createOrderDto.DeliveryDetails.FirstName,
-                    LastName = createOrderDto.DeliveryDetails.LastName,
-                    CompanyName = createOrderDto.DeliveryDetails.CompanyName
+                    throw new BusinessException(
+                        ListOfBusinessErrors.ProductNotFound,
+                        new() { { "ProductId", orderPosition.ItemId.ToString() } });
                 }
+
+                if (requestedProduct.AvailableQuantity < orderPosition.Quantity)
+                {
+                    throw new BusinessException(
+                        ListOfBusinessErrors.ProductsNotEnoughInStock,
+                        new() { { "ProductId", orderPosition.ItemId.ToString() } });
+                }
+
+                requestedProduct.AvailableQuantity -= orderPosition.Quantity;
+
+                order.OrderItems.Add(
+                    new OrderItem
+                    {
+                        Item = requestedProduct,
+                        Price = requestedProduct.Price,
+                        Quantity = orderPosition.Quantity
+                    });
+            }
+
+            order.OrderStatusHistory.Add(
+                new OrderStatusHistoryItem
+                {
+                    SerialNumber = order.GetActualOrderStatusHistorySerialNumber() + 1,
+                    EnterDateTimeUtc = _dateTimeProvider.GetCurrentDateTimeUtc(),
+                    OrderStatus = OrderStatus.ProductsReserved
+                });
+        }
+
+        private async Task CreateNewUserAsync(ItemsDbContext dbContext, Order order, CreateOrderFromAnonCommand createOrderCommand)
+        {
+            var isUserWithProvidedEmailAlreadyExist = await dbContext
+                .Users
+                .Where(u => u.Email == createOrderCommand.DeliveryDetails.Email)
+                .AnyAsync();
+
+            if (isUserWithProvidedEmailAlreadyExist)
+            {
+                throw new BusinessException(
+                    ListOfBusinessErrors.UserAlreadyExists,
+                    new() { { "Email", createOrderCommand.DeliveryDetails.Email } });
+            }
+
+            var user = new User
+            {
+                Orders = new List<Order> { order },
+                Email = createOrderCommand.DeliveryDetails.Email,
+                FirstName = createOrderCommand.DeliveryDetails.FirstName,
+                LastName = createOrderCommand.DeliveryDetails.LastName,
+                PasswordHash = string.Empty
             };
 
-            dbContext.Orders.Add(order);
+            dbContext.Users.Add(user);
 
-            foreach (var item in items)
+            order.OrderStatusHistory.Add(new()
             {
-                var requestedItem = createOrderDto
-                    .OrderItems
-                    .Where(oi => oi.ItemId == item.Id)
-                    .Single();
+                SerialNumber = order.GetActualOrderStatusHistorySerialNumber() + 1,
+                EnterDateTimeUtc = _dateTimeProvider.GetCurrentDateTimeUtc(),
+                OrderStatus = OrderStatus.UserCreated
+            });
+        }
 
-                if (item.AvailableQuantity < requestedItem.Quantity)
-                    throw new BusinessException(
-                        "Not enough in stock.",
-                        new() { { "ItemId", item.Id.ToString() } });
+        private async Task UpdateUserAsync(ItemsDbContext dbContext, Order order, CreateOrderFromUserCommand createOrderCommand)
+        {
+            var user = await dbContext
+                .Users
+                .Include(u => u.Orders)
+                .Where(u => u.Id == createOrderCommand.UserId)
+                .AsSingleQuery()
+                .SingleOrDefaultAsync();
 
-                item.AvailableQuantity -= requestedItem.Quantity;
+            if (user == default)
+            {
+                throw new BusinessException(
+                    ListOfBusinessErrors.UserNotFound,
+                    new() { { "UserId", createOrderCommand.UserId.ToString() } });
             }
 
-            if (createOrderDto is CreateAnonymOrderDto createAnonymOrderDto
-                && createAnonymOrderDto.ShouldCreateNewAccount)
+            user.FirstName = createOrderCommand.DeliveryDetails.FirstName;
+            user.LastName = createOrderCommand.DeliveryDetails.LastName;
+
+            user.Orders.Add(order);
+
+            order.OrderStatusHistory.Add(new()
             {
-                var isUserWithProvidedEmailAlreadyExist = dbContext
-                    .Users
-                    .Where(u => u.Email == createOrderDto.DeliveryDetails.Email)
-                    .Any();
-
-                if (isUserWithProvidedEmailAlreadyExist)
-                    throw new BusinessException("User with provided email already exists.");
-
-                var user = new User
-                {
-                    Orders = new List<Order> { order },
-                    Email = createOrderDto.DeliveryDetails.Email,
-                    FirstName = createOrderDto.DeliveryDetails.FirstName,
-                    LastName = createOrderDto.DeliveryDetails.LastName,
-                    PasswordHash = string.Empty
-                };
-
-                dbContext.Users.Add(user);
-            }
-            else if (createOrderDto is CreateUserOrder createUserOrder)
-            {
-                var user = await dbContext
-                    .Users
-                    .Where(u => u.Id == createUserOrder.UserId)
-                    .SingleOrThrowNotFoundExceptionAsync(
-                        nameof(User),
-                        createUserOrder.UserId.ToString()!,
-                        cancellationToken);
-
-                user.Orders.Add(order);
-            }
-
-            if (!string.IsNullOrWhiteSpace(createOrderDto.Promocode))
-            {
-                ApplyPromocode(order, createOrderDto.Promocode);
-            }
-
-            await dbContext.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+                SerialNumber = order.GetActualOrderStatusHistorySerialNumber() + 1,
+                EnterDateTimeUtc = _dateTimeProvider.GetCurrentDateTimeUtc(),
+                OrderStatus = OrderStatus.UserUpdated
+            });
         }
 
         private void ApplyPromocode(Order order, string promocode)
@@ -149,9 +224,36 @@ namespace Items.Commands.Handlers
 
             order.OrderStatusHistory.Add(new()
             {
+                SerialNumber = order.GetActualOrderStatusHistorySerialNumber() + 1,
                 EnterDateTimeUtc = _dateTimeProvider.GetCurrentDateTimeUtc(),
                 OrderStatus = OrderStatus.PromocodeApplied
             });
+        }
+
+        private void CreatePayment(ItemsDbContext dbContext, Order order)
+        {
+            var payment = new Payment()
+            {
+                Order = order,
+                PaymentStatusHistory = new List<PaymentStatusHistoryItem>()
+                {
+                    new()
+                    {
+                        SerialNumber = 1,
+                        PaymentStatus = PaymentStatus.WaitingForTransactionalOutbox,
+                        EnterDateTimeUtc = _dateTimeProvider.GetCurrentDateTimeUtc()
+                    }
+                }
+            };
+
+            order.OrderStatusHistory.Add(new()
+            {
+                SerialNumber = order.GetActualOrderStatusHistorySerialNumber() + 1,
+                EnterDateTimeUtc = _dateTimeProvider.GetCurrentDateTimeUtc(),
+                OrderStatus = OrderStatus.CreatingPayment
+            });
+
+            dbContext.Payments.Add(payment);
         }
     }
 }

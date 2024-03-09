@@ -18,7 +18,8 @@ public static class IServiceCollectionExtensions
             .AddTransient<IItemsPageQueryHandlerFactory, ItemsPageQueryHandlerFactory>()
             .AddTransient<IItemListQueryHandlerFactory, ItemListQueryHandlerFactory>()
             .AddTransient<ICategoriesQueryHandlerFactory, CategoriesQueryHandlerFactory>()
-            .AddTransient<IOrdersQueryHanlderFactory, OrdersQueryHandlerFactory>();
+            .AddTransient<IOrdersQueryHanlderFactory, OrdersQueryHandlerFactory>()
+            .AddTransient<IApplyPromocodeQueryHandlerFactory, ApplyPromocodeQueryHandlerFactory>();
 
         return serviceCollection;
     }

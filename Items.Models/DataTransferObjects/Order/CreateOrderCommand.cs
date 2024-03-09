@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace Items.Models.DataTransferObjects.Order
 {
-    [JsonDerivedType(typeof(CreateAnonymOrderDto), "anon")]
-    [JsonDerivedType(typeof(CreateUserOrder), "user")]
-    public abstract class CreateOrderBase
+    [JsonDerivedType(typeof(CreateOrderFromAnonCommand), "anon")]
+    [JsonDerivedType(typeof(CreateOrderFromUserCommand), "user")]
+    public abstract class CreateOrderCommandBase
     {
         [Required, MinLength(1)]
         public required IEnumerable<OrderItemDto> OrderItems { get; init; }
@@ -27,13 +27,13 @@ namespace Items.Models.DataTransferObjects.Order
         }
     }
 
-    public sealed class CreateUserOrder : CreateOrderBase
+    public sealed class CreateOrderFromUserCommand : CreateOrderCommandBase
     {
         public required Guid UserId { get; init; }
     }
 
-    public sealed class CreateAnonymOrderDto : CreateOrderBase
+    public sealed class CreateOrderFromAnonCommand : CreateOrderCommandBase
     {
-        public required bool ShouldCreateNewAccount { get; init; }
+
     }
 }
