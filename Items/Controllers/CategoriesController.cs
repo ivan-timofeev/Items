@@ -1,7 +1,8 @@
 ﻿using Items.Models.DataTransferObjects;
 using Microsoft.AspNetCore.Mvc;
-using Items.Abstractions.Queries.Factories;
 using Items.Models.Queries;
+using Items.Abstractions.Queries.Handlers;
+using Items.Abstractions.Queries;
 
 namespace Items.Controllers
 {
@@ -18,11 +19,11 @@ namespace Items.Controllers
         [ProducesResponseType(typeof(IEnumerable<CategoryDto>), StatusCodes.Status200OK)]
         [ProducesErrorResponseType(typeof(ErrorDto))]
         public async Task<IActionResult> GetAllCategoriesAsync(
-            [FromServices] ICategoriesQueryHandlerFactory categoriesQueryHandlerFactory,
+            [FromServices] IQueryHandlerFactory<ICategoriesQueryHandler> categoriesQueryHandlerFactory,
             CancellationToken cancellationToken)
         {
             var result = await categoriesQueryHandlerFactory
-                .CreateCachedHandler()
+                .CreateHandler()
                 .ExecuteAsync(new CategoriesQuery(), cancellationToken);
 
             return Ok(result);

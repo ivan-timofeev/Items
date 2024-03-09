@@ -66,5 +66,12 @@ namespace Items.Models.Exceptions
             SystemName = "User not found.",
             DisplayName = "Пользователь не найден."
         };
+
+        public static readonly BusinessError IncorrectUserSpecified = new()
+        {
+            ErrorCode = 5,
+            SystemName = "Incorrect user specified.",
+            DisplayName = "UserId из jwt и UserId из объекта команды не совпадают."
+        };
     }
 }

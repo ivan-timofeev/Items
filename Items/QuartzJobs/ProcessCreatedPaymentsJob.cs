@@ -1,9 +1,7 @@
-﻿using Items.Abstractions.Commands.Factories;
+﻿using Items.Abstractions.Commands;
 using Items.Abstractions.Commands.Handlers;
-using Items.Commands.Handlers;
-using Items.Models.DataTransferObjects.Order;
+using Items.Models.Commands;
 using Quartz;
-using Serilog;
 
 namespace Items.QuartzJobs
 {

@@ -1,8 +1,16 @@
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
-using Items.Abstractions.Queries.Factories;
-using Items.Queries.Factories;
+using Items.Abstractions.Commands;
+using Items.Abstractions.Commands.Handlers;
+using Items.Abstractions.Queries;
+using Items.Abstractions.Queries.Handlers;
+using Items.Commands;
+using Items.Commands.Factories;
+using Items.Commands.Handlers;
+using Items.Models.Commands;
+using Items.Queries;
+using Items.Queries.Handlers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -14,12 +22,51 @@ public static class IServiceCollectionExtensions
     public static IServiceCollection AddQueries(this IServiceCollection serviceCollection)
     {
         serviceCollection
-            .AddTransient<IItemQueryHandlerFactory, ItemQueryHandlerFactory>()
-            .AddTransient<IItemsPageQueryHandlerFactory, ItemsPageQueryHandlerFactory>()
-            .AddTransient<IItemListQueryHandlerFactory, ItemListQueryHandlerFactory>()
-            .AddTransient<ICategoriesQueryHandlerFactory, CategoriesQueryHandlerFactory>()
-            .AddTransient<IOrdersQueryHanlderFactory, OrdersQueryHandlerFactory>()
-            .AddTransient<IApplyPromocodeQueryHandlerFactory, ApplyPromocodeQueryHandlerFactory>();
+            .AddTransient<
+                IQueryHandlerFactory<IItemQueryHandler>,
+                CommonQueryHandlerFactory<IItemQueryHandler, ItemQueryHandler>>()
+
+            .AddTransient<
+                IQueryHandlerFactory<IItemsPageQueryHandler>,
+                CommonQueryHandlerFactory<IItemsPageQueryHandler, ItemsPageQueryHandler>>()
+
+            .AddTransient<
+                IQueryHandlerFactory<IItemListQueryHandler>,
+                CommonQueryHandlerFactory<IItemListQueryHandler, ItemListQueryHandler>>()
+
+            .AddTransient<
+                IQueryHandlerFactory<ICategoriesQueryHandler>,
+                CommonQueryHandlerFactory<ICategoriesQueryHandler, CategoriesQueryHandler>>()
+
+            .AddTransient<
+                IQueryHandlerFactory<IOrdersQueryHandler>,
+                CommonQueryHandlerFactory<IOrdersQueryHandler, OrdersQueryHandler>>()
+
+            .AddTransient<
+                IQueryHandlerFactory<IApplyPromocodeQueryHandler>,
+                CommonQueryHandlerFactory<IApplyPromocodeQueryHandler, ApplyPromocodeQueryHandler>>();
+
+        return serviceCollection;
+    }
+
+    public static IServiceCollection AddCommands(this IServiceCollection serviceCollection)
+    {
+        serviceCollection
+            .AddTransient<
+                ICommandHandlerFactory<ICheckDatabaseCommandHandler>,
+                CommonCommandHandlerFactory<ICheckDatabaseCommandHandler, CheckDatabaseCommandHandler>>()
+
+            .AddTransient<
+                ICommandHandlerFactory<ICreateOrderCommandHandler>,
+                CommonCommandHandlerFactory<ICreateOrderCommandHandler, CreateOrderCommandHandler>>()
+
+            .AddTransient<
+                ICommandHandlerFactory<IProcessCreatedPaymentsCommandHandler>,
+                CommonCommandHandlerFactory<IProcessCreatedPaymentsCommandHandler, ProcessCreatedPaymentsCommandHandler>>()
+
+            .AddTransient<
+                ICommandHandlerFactory<IUpdateItemCommandHandler>,
+                CommonCommandHandlerFactory<IUpdateItemCommandHandler, UpdateItemCommandHandler>>();
 
         return serviceCollection;
     }

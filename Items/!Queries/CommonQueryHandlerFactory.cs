@@ -1,19 +1,16 @@
-﻿using Items.Abstractions.Commands.Factories;
-using Items.Abstractions.Services;
+﻿using Microsoft.EntityFrameworkCore;
 using Items.Data;
-using Microsoft.EntityFrameworkCore;
-using Quartz;
-using System.Reflection.Emit;
+using Items.Abstractions.Queries;
 
-namespace Items.Commands.Factories
+namespace Items.Queries
 {
-    internal sealed class CommonCommandHandlerFactory<THandlerInterface, THandlerImplementation>
-        : ICommandHandlerFactory<THandlerInterface>
+    internal sealed class CommonQueryHandlerFactory<THandlerInterface, THandlerImplementation>
+        : IQueryHandlerFactory<THandlerInterface>
     {
         private readonly DbContextProvider _dbContextProvider;
         private readonly IServiceProvider _serviceProvider;
 
-        public CommonCommandHandlerFactory(
+        public CommonQueryHandlerFactory(
             IDbContextFactory<ItemsDbContext> dbContextFactory,
             IServiceProvider serviceProvider)
         {
@@ -26,9 +23,9 @@ namespace Items.Commands.Factories
             var constructorArguments = new object[] { _dbContextProvider };
 
             var createdHandler = ActivatorUtilities.CreateInstance(_serviceProvider, typeof(THandlerImplementation), constructorArguments)
-                ?? throw new InvalidOperationException("Something went wrong.");              
+                ?? throw new InvalidOperationException("Something went wrong.");
 
-            return (THandlerInterface) createdHandler;
+            return (THandlerInterface)createdHandler;
         }
     }
 }

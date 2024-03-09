@@ -6,11 +6,11 @@ using Items.Models.Queries;
 
 namespace Items.Queries.Handlers
 {
-    internal sealed class ItemsListQueryHandler : IItemListQueryHandler
+    internal sealed class ItemListQueryHandler : IItemListQueryHandler
     {
         private readonly DbContextProvider _dbContextProvider;
 
-        public ItemsListQueryHandler(DbContextProvider dbContextProvider)
+        public ItemListQueryHandler(DbContextProvider dbContextProvider)
         {
             _dbContextProvider = dbContextProvider;
         }

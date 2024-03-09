@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Items.Models.DataTransferObjects.Item;
 using Items.Models.DataTransferObjects;
-using Items.Commands;
-using Items.Abstractions.Queries.Factories;
 using Items.Models.Queries;
 using System.Text.Json;
+using Items.Abstractions.Queries.Handlers;
+using Items.Abstractions.Queries;
+using Items.Models;
+using Items.Abstractions.Commands;
+using Items.Abstractions.Commands.Handlers;
+using Items.Models.Commands;
 
 namespace Items.Controllers;
 
@@ -13,20 +16,10 @@ namespace Items.Controllers;
 [Route("api/[controller]")]
 public class ItemsController : ControllerBase
 {
-    private readonly ICommandsFactory _commandsFactory;
-
-    public ItemsController(
-        ICommandsFactory commandsFactory)
-    {
-        _commandsFactory = commandsFactory;
-    }
-
     // GET: api/items/ ? page=1 & pageSize=10 & filter={filterJsonEncoded} & sort={string}
     [HttpGet(Name = "GetItemsWithPagination")]
-    [ProducesResponseType(typeof(IEnumerable<ItemDto>), StatusCodes.Status200OK)]
-    [ProducesErrorResponseType(typeof(ErrorDto))]
-    public async Task<IActionResult> GetItemsByPage(
-        [FromServices] IItemsPageQueryHandlerFactory itemsPageQueryHandlerFactory,
+    public async Task<PaginatedResult<ItemDto>> GetItemsByPage(
+        [FromServices] IQueryHandlerFactory<IItemsPageQueryHandler> handlerFactory,
         [FromQuery] int page,
         [FromQuery] int pageSize,
         CancellationToken cancellationToken,
@@ -37,8 +30,8 @@ public class ItemsController : ControllerBase
             ? JsonSerializer.Deserialize<FilterDto>(filter)
             : null;
 
-        var result = await itemsPageQueryHandlerFactory
-            .CreateCachedHandler()
+        var result = await handlerFactory
+            .CreateHandler()
             .ExecuteAsync(
                 new ItemsPageQuery
                 {
@@ -49,20 +42,18 @@ public class ItemsController : ControllerBase
                 },
                 cancellationToken);
 
-        return Ok(result);
+        return result;
     }
 
     // GET: api/items/:id
     [HttpGet("{id:guid}", Name = "GetItem")]
-    [ProducesResponseType(typeof(ItemDto), StatusCodes.Status200OK)]
-    [ProducesErrorResponseType(typeof(ErrorDto))]
-    public async Task<IActionResult> Get(
-        [FromServices] IItemQueryHandlerFactory itemQueryHandlerFactory,
+    public async Task<ItemDto> Get(
+        [FromServices] IQueryHandlerFactory<IItemQueryHandler> handlerFactory,
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
-        var result = await itemQueryHandlerFactory
-            .CreateCachedHandler()
+        var result = await handlerFactory
+            .CreateHandler()
             .ExecuteAsync(
                 new ItemQuery
                 {
@@ -70,40 +61,41 @@ public class ItemsController : ControllerBase
                 },
                 cancellationToken);
 
-        return Ok(result);
+        return result;
     }
 
     // GET: api/Items/GetItemsList ? ids={guid} & ids={guid} ...
     [HttpGet(template: "GetItemsList", Name = "GetItemList")]
-    [ProducesResponseType(typeof(IEnumerable<ItemDto>), StatusCodes.Status200OK)]
-    [ProducesErrorResponseType(typeof(ErrorDto))]
-    public async Task<IActionResult> GetItemListAsync(
-        [FromServices] IItemListQueryHandlerFactory itemListQueryHandlerFactory,
+    public async Task<IEnumerable<ItemDto>> GetItemListAsync(
+        [FromServices] IQueryHandlerFactory<IItemListQueryHandler> handlerFactory,
         [FromQuery] IReadOnlyCollection<Guid> ids,
         CancellationToken cancellationToken)
     {
-        var result = await itemListQueryHandlerFactory
-            .CreateCachedHandler()
+        var result = await handlerFactory
+            .CreateHandler()
             .ExecuteAsync(
                 new ItemListQuery { ItemsIds = ids },
                 cancellationToken);
 
-        return Ok(result);
+        return result;
     }
 
     // PUT: api/items/:id
     [HttpPut("{id:guid}", Name = "UpdateItem")]
-    [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
-    [ProducesErrorResponseType(typeof(ErrorDto))]
-    public async Task<IActionResult> UpdateItem(
+    public async Task UpdateItem(
+        [FromServices] ICommandHandlerFactory<IUpdateItemCommandHandler> handlerFactory,
         [FromRoute] Guid id,
-        [FromBody, BindRequired] ItemDto itemDto,
+        [FromBody] ItemDto itemDto,
         CancellationToken cancellationToken)
     {
-        await _commandsFactory
-            .CreateUpdateItemCommand(id, itemDto)
-            .ExecuteAsync(cancellationToken);
-
-        return Ok();
+        await handlerFactory
+            .CreateHandler()
+            .ExecuteAsync(
+                new UpdateItemCommand
+                {
+                    ItemId = id,
+                    ItemDto = itemDto
+                },
+                cancellationToken);
     }
 }

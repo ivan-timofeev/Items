@@ -1,4 +1,4 @@
-﻿namespace Items.Commands
+﻿namespace Items.Abstractions.Commands
 {
     public interface ICommand
     {

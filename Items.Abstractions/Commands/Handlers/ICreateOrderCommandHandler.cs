@@ -1,8 +1,9 @@
-﻿using Items.Models.DataTransferObjects.Order;
+﻿using Items.Models.Commands;
 
 namespace Items.Abstractions.Commands.Handlers
 {
-    public interface ICreateOrderCommandHandler : ICommandHandler<CreateOrderCommandBase>
+    public interface ICreateOrderCommandHandler
+        : ICommandHandler<CreateOrderCommandBase>
     {
 
     }
