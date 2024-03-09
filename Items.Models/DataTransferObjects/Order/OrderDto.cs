@@ -12,8 +12,14 @@ namespace Items.Models.DataTransferObjects.Order
         public required IList<OrderStatusHistoryItemDto> OrderStatusHistory { get; set; }
         public required IEnumerable<OrderItemDto> OrderItems { get; init; }
         public required DeliveryDetailsDto DeliveryDetails { get; init; }
+        public required PaymentDto PaymentDetails { get; init; }
         public Guid? UserId { get; init; }
         public decimal TotalOrderPrice => OrderItems.Sum(x => x.TotalPrice);
+
+        public class PaymentDto
+        {
+
+        }
 
         public class OrderItemDto
         {

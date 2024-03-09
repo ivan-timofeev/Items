@@ -14,6 +14,9 @@ public class ItemsDbContext : DbContext
     public virtual DbSet<OrderStatusHistoryItem> OrderStatusHistoryItems { get; set; }
     public virtual DbSet<DeliveryDetails> DeliveryDetails { get; set; }
 
+    public virtual DbSet<Payment> Payments { get; set; }
+    public virtual DbSet<PaymentStatusHistoryItem> PaymentStatusHistoryItems { get; set; }
+
     public ItemsDbContext(DbContextOptions options) : base(options)
     {
         Items = Set<Item>();
@@ -23,6 +26,8 @@ public class ItemsDbContext : DbContext
         OrderItems = Set<OrderItem>();
         OrderStatusHistoryItems = Set<OrderStatusHistoryItem>();
         DeliveryDetails = Set<DeliveryDetails>();
+        Payments = Set<Payment>();
+        PaymentStatusHistoryItems = Set<PaymentStatusHistoryItem>();
     }
 
     protected ItemsDbContext() { }

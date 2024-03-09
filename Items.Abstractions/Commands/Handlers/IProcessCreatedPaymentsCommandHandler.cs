@@ -2,7 +2,7 @@
 
 namespace Items.Abstractions.Commands.Handlers
 {
-    public interface ICreateOrderCommandHandler : ICommandHandler<CreateOrderCommandBase>
+    public interface IProcessCreatedPaymentsCommandHandler : ICommandHandler<ProcessCreatedPaymentsCommand>
     {
 
     }

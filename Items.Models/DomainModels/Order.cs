@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,12 +11,56 @@ namespace Items.Models
     {
         public Guid Id { get; set; }
         public User? User { get; set; }
+        public Payment? Payment { get; set; }
         public required DeliveryDetails DeliveryDetails { get; set; }
         public required DateTime CreateDateTimeUtc { get; set; }
         public required IList<OrderItem> OrderItems { get; set; }
             = new List<OrderItem>();
         public required IList<OrderStatusHistoryItem> OrderStatusHistory { get; set; }
             = new List<OrderStatusHistoryItem>();
+
+        public int GetActualOrderStatusHistorySerialNumber()
+        {
+            return OrderStatusHistory
+                .OrderByDescending(o => o.SerialNumber)
+                .First()
+                .SerialNumber;
+        }
+    }
+
+    public class Payment
+    {
+        public Guid Id { get; set; }
+
+        public Guid OrderId { get; set; }
+        public required Order Order { get; set; }
+
+        public string? PaymentKey { get; set; }
+
+        public required IList<PaymentStatusHistoryItem> PaymentStatusHistory { get; set; }
+            = new List<PaymentStatusHistoryItem>();
+
+        public int GetActualSerialNumber()
+        {
+            return PaymentStatusHistory
+                .OrderByDescending(psh => psh.SerialNumber)
+                .First()
+                .SerialNumber;
+        }
+    }
+
+    public class PaymentStatusHistoryItem
+    {
+        public Guid Id { get; set; }
+        public required int SerialNumber { get; init; }
+        public required DateTime EnterDateTimeUtc { get; init; }
+        public required PaymentStatus PaymentStatus { get; init; }
+    }
+
+    public enum PaymentStatus
+    {
+        WaitingForTransactionalOutbox,
+        WaitingForPayment
     }
 
     public class DeliveryDetails
@@ -41,6 +86,7 @@ namespace Items.Models
     public class OrderStatusHistoryItem
     {
         public Guid Id { get; set; }
+        public required int SerialNumber { get; init; }
         public required OrderStatus OrderStatus { get; init; }
         public required DateTime EnterDateTimeUtc { get; init; }
 
@@ -50,6 +96,10 @@ namespace Items.Models
     {
         Canceled,
         Created,
+        ProductsReserved,
+        UserCreated,
+        UserUpdated,
+        CreatingPayment,
         WaitingForPayment,
         InDelivery,
         Completed,

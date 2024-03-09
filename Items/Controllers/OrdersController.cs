@@ -1,5 +1,7 @@
 ﻿using Items.Abstractions.Commands.Factories;
+using Items.Abstractions.Commands.Handlers;
 using Items.Abstractions.Queries.Factories;
+using Items.Commands.Handlers;
 using Items.Models.DataTransferObjects.Order;
 using Items.Models.Queries;
 using Microsoft.AspNetCore.Mvc;
@@ -12,8 +14,8 @@ namespace Items.Controllers
     {
         [HttpPost]
         public async Task<IActionResult> CreateOrder(
-            [FromServices] ICreateOrderCommandHandlerFactory createOrderCommandHandlerFactory,
-            [FromBody] CreateOrderBase createOrderDto,
+            [FromServices] ICommandHandlerFactory<ICreateOrderCommandHandler> createOrderCommandHandlerFactory,
+            [FromBody] CreateOrderCommandBase createOrderDto,
             CancellationToken cancellationToken)
         {
             await createOrderCommandHandlerFactory
