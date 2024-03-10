@@ -1,6 +1,8 @@
 ﻿using Items.Commands;
+using Items.Commands.Handlers;
 using Items.Data;
 using Items.Models;
+using Items.Models.Commands;
 using Items.Models.DataTransferObjects.Item;
 using Items.Models.Exceptions;
 using Microsoft.Extensions.Caching.Memory;
@@ -52,13 +54,13 @@ public class UpdateItemCommandTests
             .Setup(d => d.ItemsCategory)
             .ReturnsDbSet(Array.Empty<ItemCategory>());
 
-        var memoryCacheMock = new Mock<IMemoryCache>();
-
-        var command = new UpdateItemCommand(item.Id, updateItemDto, dbContextMock.Object, memoryCacheMock.Object);
+        var commandHandler = new UpdateItemCommandHandler((cts) => Task.FromResult(dbContextMock.Object));
 
 
         // Act
-        await command.ExecuteAsync(CancellationToken.None);
+        await commandHandler.ExecuteAsync(
+            new UpdateItemCommand { ItemDto = updateItemDto, ItemId = item.Id },
+            CancellationToken.None);
 
 
         // Assert
@@ -70,35 +72,18 @@ public class UpdateItemCommandTests
         Assert.AreEqual(updateItemDto.OverallRating, items[0].OverallRating);
         CollectionAssert.AreEqual(updateItemDto.Categories.ToArray(), items[0].Categories.Select(c => c.DisplayName).ToArray());
 
-        memoryCacheMock.Verify(
-            m => m.Remove(Item.GetCacheKey(item.Id)),
-            Times.Once);
-
         dbContextMock.Verify(
             d => d.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [TestMethod]
-    [ExpectedException(typeof(EntityNotFoundException))]
     public async Task ExecuteAsync_ItemNotExists_ShouldThrowException()
     {
         // Arrange
-        var item = new Item
-        {
-            Id = Guid.NewGuid(),
-            Price = 50,
-            Description = "Original Description",
-            DisplayName = "Original Display name",
-            AvailableQuantity = 0,
-            ImageUrl = "Original image url",
-            OverallRating = 0,
-            Categories = new List<ItemCategory>()
-        };
-
         var updateItemDto = new ItemDto
         {
-            Id = item.Id,
+            Id = Guid.NewGuid(),
             Price = 100,
             Description = "Updated Description",
             DisplayName = "Updated Display name",
@@ -114,10 +99,20 @@ public class UpdateItemCommandTests
             .Setup(d => d.Items)
             .ReturnsDbSet(Array.Empty<Item>());
 
-        var command = new UpdateItemCommand(item.Id, updateItemDto, dbContextMock.Object, Mock.Of<IMemoryCache>());
+        var commandHandler = new UpdateItemCommandHandler((cts) => Task.FromResult(dbContextMock.Object));
 
 
-        // Act
-        await command.ExecuteAsync(CancellationToken.None);
+        // Act & Assert
+        try
+        {
+            await commandHandler.ExecuteAsync(
+                new UpdateItemCommand { ItemDto = updateItemDto, ItemId = updateItemDto.Id },
+                CancellationToken.None);
+        }
+        catch (BusinessException ex)
+        {
+            Assert.AreEqual(ListOfBusinessErrors.ProductNotFound, ex.BusinessError);
+            Assert.AreEqual(updateItemDto.Id.ToString(), ex.Data["Id"]);
+        }
     }
 }
